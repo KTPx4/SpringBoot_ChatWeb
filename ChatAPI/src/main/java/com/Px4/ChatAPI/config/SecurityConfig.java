@@ -29,8 +29,6 @@ public class SecurityConfig {
     private final AccountRepository accountRepository;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
-
-
     public SecurityConfig(AccountRepository accountRepository, CustomAccessDeniedHandler customAccessDeniedHandler) {
         this.accountRepository = accountRepository;
         this.customAccessDeniedHandler = customAccessDeniedHandler;
@@ -70,12 +68,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtRequestFilter jwtRequestFilter) throws Exception {
         http
-              //  .cors(s -> s.configurationSource(corsConfigurationSource()))
+
                 .csrf(s->s.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/account/login").permitAll()
                         .requestMatchers("/api/account/register").permitAll()
-                        .requestMatchers("/api/messages/**").authenticated()
+                        .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(excH -> excH.accessDeniedHandler(customAccessDeniedHandler))
