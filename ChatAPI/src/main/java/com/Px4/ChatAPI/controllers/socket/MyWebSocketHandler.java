@@ -1,10 +1,9 @@
-package com.example.demo.controller;
+package com.Px4.ChatAPI.controllers.socket;
 
-import com.example.demo.Model.Message;
+import com.Px4.ChatAPI.models.Message.MessageChat;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
@@ -22,7 +21,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         // Xử lý khi kết nối được thiết lập
         System.out.println("Kết nối mới: " + session.getId());
         sessions.add(session);
-        Message mess = new Message("yourid", session.getId(), "you");
+        MessageChat mess = new MessageChat("yourid", session.getId(), "you");
         String json = objectMapper.writeValueAsString(mess);
     }
 
@@ -31,7 +30,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         // Xử lý khi nhận được tin nhắn
         System.out.println("Nhận tin nhắn: " + message.getPayload());
 
-        Message msg = objectMapper.readValue(message.getPayload(), Message.class);
+        MessageChat msg = objectMapper.readValue(message.getPayload(), MessageChat.class);
 
         String type = "", content= "", sender = "";
         sender  = msg.getSender();
@@ -58,7 +57,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             content = "1 User disconnect " + msg.getSender();
         }
 
-        Message mess = new Message(type,content, sender);
+        MessageChat mess = new MessageChat(type,content, sender);
         String json = objectMapper.writeValueAsString(mess);
 
         for (WebSocketSession s : sessions) {
@@ -73,7 +72,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         String type = "disconnect";
         String content = "Server: 1 User disconnect ";
         String sender = "unknow";
-        Message mess = new Message(type,content, sender);
+        MessageChat mess = new MessageChat(type,content, sender);
         String json = objectMapper.writeValueAsString(mess);
 
         sessions.remove(session);

@@ -42,8 +42,8 @@
     //            filterChain.doFilter(request, response);
     //            return;
 
-                if (requestPath.equals("/api/account/login") || requestPath.equals("/api/account/register")   )
-             {
+                if (requestPath.equals("/ws") || requestPath.equals("/api/account/login") || requestPath.equals("/api/account/register")   )
+                {
                     filterChain.doFilter(request, response);
                     return;
                 }
