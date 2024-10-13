@@ -19,7 +19,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
@@ -69,11 +70,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtRequestFilter jwtRequestFilter) throws Exception {
         http
+              //  .cors(s -> s.configurationSource(corsConfigurationSource()))
                 .csrf(s->s.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/account/login").permitAll()
                         .requestMatchers("/api/account/register").permitAll()
-
+                        .requestMatchers("/api/messages/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(excH -> excH.accessDeniedHandler(customAccessDeniedHandler))
@@ -83,4 +85,6 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+
 }
