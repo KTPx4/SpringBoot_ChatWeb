@@ -1,6 +1,7 @@
     package com.Px4.ChatAPI.controllers.JWT;
 
 
+    import com.Px4.ChatAPI.models.JWT.BlackListRepository;
     import jakarta.servlet.FilterChain;
     import jakarta.servlet.ServletException;
     import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,9 @@
         private UserDetailsService userDetailsService;
 
         @Autowired
+        private BlackListRepository blackListRepository;
+
+        @Autowired
         private JwtUtil jwtUtil;
 
         @Autowired
@@ -39,10 +43,7 @@
                 String requestPath = request.getRequestURI();
 
                 // Bỏ qua các endpoint không yêu cầu xác thực
-    //            filterChain.doFilter(request, response);
-    //            return;
-
-                if (requestPath.equals("/ws") || requestPath.equals("/api/account/login") || requestPath.equals("/api/account/register")   )
+                if ( IgnoreRequest.isIgnore(requestPath))
                 {
                     filterChain.doFilter(request, response);
                     return;
@@ -54,24 +55,19 @@
                 String jwt = null;
 
                 // Kiểm tra xem Authorization header có chứa Bearer token hay không
-                if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-                    throw new Exception("Please Login");
-                }
+                if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) throw new Exception("Please Login");
+
 
                 jwt = authorizationHeader.substring(7);  // Bỏ chữ "Bearer " để lấy token
-                username = jwtUtil.extractUsername(jwt); // Trích xuất username từ token
+
+                username = jwtUtil.extractUsername(jwt); // Xác Thực và Trích xuất username từ token
+
+                if(blackListRepository.existsByToken(jwt)) throw new Exception("Token has been deleted!"); // Check black list of token
 
                 // Xác thực người dùng nếu có token và người dùng chưa được xác thực trong SecurityContextHolder
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null ) {
 
                     UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-
-                    // Xác thực token
-                    if(!jwtUtil.validateToken(jwt, userDetails))
-                    {
-                        throw new Exception("Invalid User or Login Expired");
-                    }
-
 
                     UsernamePasswordAuthenticationToken authenticationToken =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
@@ -91,7 +87,6 @@
             {
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
                 response.getWriter().write(e.getMessage());
-                //throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.getMessage());
             }
 
         }

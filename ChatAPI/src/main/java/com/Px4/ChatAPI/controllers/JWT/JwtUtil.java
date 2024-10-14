@@ -42,7 +42,7 @@ public class JwtUtil {
         }
         catch (Exception e)
         {
-            throw new Exception("Invalid Token");
+            throw new Exception("Invalid Token or Token Expired");
         }
 
 

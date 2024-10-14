@@ -2,6 +2,8 @@ package com.Px4.ChatAPI.controllers.socket;
 
 import com.Px4.ChatAPI.models.Message.MessageChat;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -14,6 +16,7 @@ import java.util.Set;
 public class MyWebSocketHandler extends TextWebSocketHandler {
     private ObjectMapper objectMapper = new ObjectMapper();
 
+    private SimpMessageSendingOperations messagingTemplate;
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
 
     @Override
@@ -39,7 +42,6 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             // Gửi lại tin nhắn chat cho tất cả các client
             type = "chat";
             content = sender +": " + msg.getContent();
-
         }
         else if ("connect".equals(msg.getType()))
         {

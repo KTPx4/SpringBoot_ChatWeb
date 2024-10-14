@@ -2,8 +2,12 @@ package com.Px4.ChatAPI.controllers.Account;
 
 
 import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
+import com.Px4.ChatAPI.models.BaseRespone;
 import com.Px4.ChatAPI.models.account.AccountModel;
+import com.Px4.ChatAPI.models.account.LoginModel;
+import com.Px4.ChatAPI.models.account.RegisterModel;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +16,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -53,19 +58,46 @@ public class AccountController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AccountModel> addAccount(@RequestBody AccountModel account)
+    public ResponseEntity<BaseRespone> addAccount(@RequestBody RegisterModel registerAccount)
     {
-        account.setPassword(passwordEncoder.encode(account.getPassword()));
-        AccountModel accountCreate = accounService.createAccount(account);
-        return new ResponseEntity<>(accountCreate, HttpStatus.CREATED);
+
+        String mess = "Create Success";
+        HttpStatus status = HttpStatus.CREATED;
+
+        try{
+            accounService.createAccount(registerAccount); // create account
+        }
+        catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+            status = HttpStatus.BAD_REQUEST;
+
+            if(e.getMessage().contains("create"))
+            {
+                String eMess = e.getMessage().split("-")[1]; // get exception message
+                mess = "Create Failed: " + eMess ;
+            }
+            else if(e.getMessage().contains("null"))
+            {
+                mess = "Create Failed: " + e.getMessage() ;
+            }
+            else
+            {
+                mess = "Create Failed. Try Again!";
+                status = HttpStatus.INTERNAL_SERVER_ERROR;
+            }
+        }
+
+        return new ResponseEntity<>(new BaseRespone(mess, registerAccount), status );
+
     }
 
     // Đăng nhập: nhận username và password, trả về JWT nếu thông tin đúng
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody AccountLoginInfo authRequest) throws Exception {
+    public Map<String, String> login(@RequestBody LoginModel authRequest) throws Exception {
         Map<String, String> res = new HashMap<>();
         try {
-            // Tìm tài khoản từ TestAccount (có thể giả lập DB)
+
             AccountModel account = accounService.getAccountByUsername(authRequest.getUsername())
                     .orElseThrow(() -> new Exception("User not found"));
 
@@ -79,41 +111,30 @@ public class AccountController {
             String jwt = jwtUtil.generateToken(userDetails);
 
             // Trả về JWT cho người dùng
-
             res.put("token", jwt);
             return res;
 
         }
-        catch (Exception e) {
+        catch (Exception e)
+        {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            //response.getWriter().write(e.getMessage());
             res.put("message", e.getMessage());
             return  res;
-            // throw new RuntimeException("Incorrect username or password");
         }
     }
+
+
+    @PostMapping("/logout")
+    public ResponseEntity<BaseRespone> logout(@RequestBody String token)
+    {
+        // logic for  add token to black list
+        //////////////////
+
+
+        return new ResponseEntity<>(new BaseRespone("logout success. The token has been deleted", token), HttpStatus.OK);
+    }
+
+
 }
 
-// Lớp nhận thông tin đăng nhập (username, password)
-class AccountLoginInfo {
 
-    private String username;
-    private String password;
-
-    // Getters và Setters
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-}
