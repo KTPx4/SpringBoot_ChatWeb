@@ -19,7 +19,7 @@ public class JwtUtil {
     @Value("${spring.datasource.jwtsecret_key}")
     private String SECRET_KEY; // Thay thế bằng secret key của bạn
 
-    public String extractUsername(String token) throws Exception{
+    public String extractID(String token) throws Exception{
         return extractClaim(token, Claims::getSubject);
     }
 
@@ -32,6 +32,17 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
 
+    public String generateToken(String id) {
+        Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, id);
+    }
+
+    public Boolean validateToken(String token, UserDetails userDetails) throws Exception{
+        final String username = extractID(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+
     private Claims extractAllClaims(String token) throws Exception{
         try{
             Claims claims = Jwts.parser()
@@ -42,7 +53,7 @@ public class JwtUtil {
         }
         catch (Exception e)
         {
-            throw new Exception("Invalid Token");
+            throw new Exception("Invalid Token or Token Expired");
         }
 
 
@@ -50,11 +61,6 @@ public class JwtUtil {
 
     private Boolean isTokenExpired(String token) throws Exception{
         return extractExpiration(token).before(new Date());
-    }
-
-    public String generateToken(UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, userDetails.getUsername());
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
@@ -67,8 +73,5 @@ public class JwtUtil {
                 .compact();
     }
 
-    public Boolean validateToken(String token, UserDetails userDetails) throws Exception{
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-    }
+
 }

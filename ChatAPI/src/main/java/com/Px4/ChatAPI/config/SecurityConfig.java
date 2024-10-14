@@ -5,6 +5,7 @@ import com.Px4.ChatAPI.controllers.JWT.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
 import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.account.AccountRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,8 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
@@ -28,6 +28,8 @@ public class SecurityConfig {
     // private final TestAccount testAccount = new TestAccount();
     private final AccountRepository accountRepository;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
+
+
 
     public SecurityConfig(AccountRepository accountRepository, CustomAccessDeniedHandler customAccessDeniedHandler) {
         this.accountRepository = accountRepository;
@@ -71,8 +73,8 @@ public class SecurityConfig {
 
                 .csrf(s->s.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/account/login").permitAll()
-                        .requestMatchers("/api/account/register").permitAll()
+                        .requestMatchers("/api/v1/account/login").permitAll()
+                        .requestMatchers("/api/v1/account/register").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
