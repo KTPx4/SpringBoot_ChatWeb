@@ -1,5 +1,7 @@
 package com.Px4.ChatAPI.controllers.Account;
 
+import com.Px4.ChatAPI.models.JWT.BlackListModel;
+import com.Px4.ChatAPI.models.JWT.BlackListRepository;
 import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.account.AccountRepository;
 import com.Px4.ChatAPI.models.account.RegisterModel;
@@ -14,6 +16,8 @@ import java.util.regex.Pattern;
 @Service
 public class AccountService {
 
+    @Autowired
+    private BlackListRepository blackListRepository;
     private final AccountRepository accountRepository;
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -109,6 +113,12 @@ public class AccountService {
     // Xóa tài khoản theo ID
     public void deleteAccount(String id) {
         accountRepository.deleteById(id);
+    }
+
+    public void logOut(String token)
+    {
+        blackListRepository.save(new BlackListModel(blackListRepository.count() + 1 ,token));
+
     }
 
 }

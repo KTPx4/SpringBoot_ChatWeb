@@ -1,7 +1,10 @@
     package com.Px4.ChatAPI.controllers.JWT;
 
 
+    import com.Px4.ChatAPI.controllers.Account.AccountService;
     import com.Px4.ChatAPI.models.JWT.BlackListRepository;
+    import com.Px4.ChatAPI.models.account.AccountModel;
+    import com.Px4.ChatAPI.models.account.AccountRepository;
     import jakarta.servlet.FilterChain;
     import jakarta.servlet.ServletException;
     import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +20,7 @@
     import org.springframework.web.filter.OncePerRequestFilter;
 
     import java.io.IOException;
+    import java.util.Optional;
 
     @Component
     public  class JwtRequestFilter extends OncePerRequestFilter {
@@ -25,10 +29,17 @@
         private UserDetailsService userDetailsService;
 
         @Autowired
+        private AccountService accountService;
+
+        @Autowired
+        private AccountRepository accountRepository;
+
+        @Autowired
         private BlackListRepository blackListRepository;
 
         @Autowired
         private JwtUtil jwtUtil;
+
 
         @Autowired
         public JwtRequestFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
@@ -58,11 +69,17 @@
                 if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) throw new Exception("Please Login");
 
 
-                jwt = authorizationHeader.substring(7);  // Bỏ chữ "Bearer " để lấy token
+                jwt = authorizationHeader.replace("Bearer ", "");  // Bỏ chữ "Bearer " để lấy token
 
-                username = jwtUtil.extractUsername(jwt); // Xác Thực và Trích xuất username từ token
+                String idUser = jwtUtil.extractID(jwt); // Xác Thực và Trích xuất username từ token
 
-                if(blackListRepository.existsByToken(jwt)) throw new Exception("Token has been deleted!"); // Check black list of token
+
+                if(blackListRepository.existsByToken(jwt)) throw new Exception("Token has been deleted. Please Login"); // Check black list of token
+
+                // find username by id của jwt token
+                Optional<AccountModel> acc = accountService.getAccountById(idUser);
+                username = acc.isPresent() ? acc.get().getUsername() : null;
+
 
                 // Xác thực người dùng nếu có token và người dùng chưa được xác thực trong SecurityContextHolder
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null ) {
@@ -77,6 +94,9 @@
                     // Thiết lập đối tượng Authentication vào SecurityContext
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
+                }
+                else{
+                    throw new Exception("User not found or have been deleted.");
                 }
 
                 // Tiếp tục chuỗi xử lý filter

@@ -1,6 +1,7 @@
 package com.Px4.ChatAPI.controllers.Account;
 
 
+import com.Px4.ChatAPI.config.ResponeMessage;
 import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
 import com.Px4.ChatAPI.models.BaseRespone;
 import com.Px4.ChatAPI.models.account.AccountModel;
@@ -9,6 +10,7 @@ import com.Px4.ChatAPI.models.account.RegisterModel;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,8 +26,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+
+
 @RestController
-@RequestMapping("/api/account")
+@RequestMapping("/api/v1/account")
 public class AccountController {
 
     @Autowired
@@ -44,18 +48,46 @@ public class AccountController {
     private HttpServletResponse response;
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
+    @GetMapping("/all")
     public List<AccountModel> getAll()
     {
         return accounService.getAllAccounts();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AccountModel> getById(@PathVariable String id)
-    {
-        Optional<AccountModel> account = accounService.getAccountById(id);
-        return account.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<BaseRespone> getById(@PathVariable String id, @RequestHeader("Authorization") String authorizationHeader) {
+
+        // Lấy JWT token từ header và loại bỏ phần "Bearer "
+        String jwtToken = authorizationHeader.replace("Bearer ", "");
+
+        String mess = ResponeMessage.getSucce;
+        HttpStatus status = HttpStatus.OK;
+        Optional<AccountModel> account = null;
+
+        try{
+            // Giải mã JWT để lấy thông tin người dùng
+            String userIdFromToken = jwtUtil.extractID(jwtToken); // Giả sử hàm extractUserId sẽ lấy được ID từ token
+
+            // So sánh ID từ token với ID mà client yêu cầu
+            if (id.equals(userIdFromToken)) {
+                // Nếu khớp, tiếp tục tìm kiếm account
+                 account = accounService.getAccountById(id);
+            }
+            else{
+                mess = ResponeMessage.Forbidden;
+                status = HttpStatus.FORBIDDEN;
+            }
+
+        }
+        catch (Exception e)
+        {
+            mess = e.getMessage();
+            status = HttpStatus.UNAUTHORIZED;
+        }
+
+        return new ResponseEntity<>(new BaseRespone(mess, account), status);
     }
+
 
     @PostMapping("/register")
     public ResponseEntity<BaseRespone> addAccount(@RequestBody RegisterModel registerAccount)
@@ -107,8 +139,8 @@ public class AccountController {
             }
 
             // Tạo JWT sau khi xác thực thành công
-            UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
-            String jwt = jwtUtil.generateToken(userDetails);
+
+            String jwt = jwtUtil.generateToken(account.getId());
 
             // Trả về JWT cho người dùng
             res.put("token", jwt);
@@ -125,11 +157,12 @@ public class AccountController {
 
 
     @PostMapping("/logout")
-    public ResponseEntity<BaseRespone> logout(@RequestBody String token)
+    public ResponseEntity<BaseRespone> logout(@RequestHeader("Authorization") String authorizationHeader)
     {
         // logic for  add token to black list
         //////////////////
-
+        String token = authorizationHeader.replace("Bearer ", "");
+        accounService.logOut(token);
 
         return new ResponseEntity<>(new BaseRespone("logout success. The token has been deleted", token), HttpStatus.OK);
     }
