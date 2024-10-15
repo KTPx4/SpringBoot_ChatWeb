@@ -10,8 +10,8 @@ public class IgnoreRequest {
     {
         List<String> ignoreList = Arrays.asList(
                 "/ws",
-                "/api/account/login",
-                "/api/account/register"
+                "/api/v1/account/login",
+                "/api/v1/account/register"
         );
 
         return ignoreList.contains(requestPath);

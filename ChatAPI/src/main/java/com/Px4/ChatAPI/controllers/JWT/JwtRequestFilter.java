@@ -1,7 +1,8 @@
     package com.Px4.ChatAPI.controllers.JWT;
 
 
-    import com.Px4.ChatAPI.controllers.Account.AccountService;
+    import com.Px4.ChatAPI.config.ResponeMessage;
+    import com.Px4.ChatAPI.services.AccountService;
     import com.Px4.ChatAPI.models.JWT.BlackListRepository;
     import com.Px4.ChatAPI.models.account.AccountModel;
     import com.Px4.ChatAPI.models.account.AccountRepository;
@@ -24,6 +25,24 @@
 
     @Component
     public  class JwtRequestFilter extends OncePerRequestFilter {
+        private static String idfromJWT;
+        private static String jwtToken;
+
+        public static String getJwtToken() {
+            return jwtToken;
+        }
+
+        public static void setJwtToken(String jwtToken) {
+            JwtRequestFilter.jwtToken = jwtToken;
+        }
+
+        public static String getIdfromJWT() {
+            return idfromJWT;
+        }
+
+        public static void setIdfromJWT(String idfromJWT) {
+            JwtRequestFilter.idfromJWT = idfromJWT;
+        }
 
         @Autowired
         private UserDetailsService userDetailsService;
@@ -74,7 +93,7 @@
                 String idUser = jwtUtil.extractID(jwt); // Xác Thực và Trích xuất username từ token
 
 
-                if(blackListRepository.existsByToken(jwt)) throw new Exception("Token has been deleted. Please Login"); // Check black list of token
+                if(blackListRepository.existsByToken(jwt)) throw new Exception(ResponeMessage.jwtDeleted); // Check black list of token
 
                 // find username by id của jwt token
                 Optional<AccountModel> acc = accountService.getAccountById(idUser);
@@ -90,6 +109,10 @@
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails( request));
+
+                    // Set jwt token and id
+                    setIdfromJWT(idUser);
+                    setJwtToken(jwt);
 
                     // Thiết lập đối tượng Authentication vào SecurityContext
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);

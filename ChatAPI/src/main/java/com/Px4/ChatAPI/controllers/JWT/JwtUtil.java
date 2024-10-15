@@ -1,6 +1,7 @@
 package com.Px4.ChatAPI.controllers.JWT;
 
 
+import com.Px4.ChatAPI.config.ResponeMessage;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -53,7 +54,7 @@ public class JwtUtil {
         }
         catch (Exception e)
         {
-            throw new Exception("Invalid Token or Token Expired");
+            throw new Exception(ResponeMessage.jwtInvalid);
         }
 
 
@@ -68,7 +69,7 @@ public class JwtUtil {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // Token valid for 10 hours
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 7)) // Token valid for 7 day
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY.getBytes())
                 .compact();
     }
