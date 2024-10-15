@@ -2,7 +2,7 @@
 
 
     import com.Px4.ChatAPI.config.ResponeMessage;
-    import com.Px4.ChatAPI.controllers.Account.AccountService;
+    import com.Px4.ChatAPI.services.AccountService;
     import com.Px4.ChatAPI.models.JWT.BlackListRepository;
     import com.Px4.ChatAPI.models.account.AccountModel;
     import com.Px4.ChatAPI.models.account.AccountRepository;

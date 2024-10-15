@@ -41,18 +41,10 @@ This project is a chat application consisting of an API server (`ChatAPI` - Spri
   - **Header:** `Authorization`
   - **Response**: 
   - **Request Body Example:**  
-  
-
-- **Get By ID:**
-  - User only can access infomation account from their id. They can't find other account (security purpose). 
-  - **Endpoint:** `GET /api/v1/account/{id}`
-  - **Header:** `Authorization`
-    - **Response**: Account hava `id` 
-  - **Request Body Example:**
 
 
 - **Change Password**
-  - **Endpoint:** `PUT /api/v1/account/password`
+  - **Endpoint:** `POST /api/v1/account/password`
   - **Header:** `Authorization`
   - Requires `oldPass` and `newPass`.
   - **Response**: New password will update if oldpass validated. Response JWT token after update success.
@@ -63,6 +55,43 @@ This project is a chat application consisting of an API server (`ChatAPI` - Spri
       "newPass": "password123"
     }
     ```   
-  
+
+- **Reset Password**
+  - Reset password via email. An url will send to email of user, they can use it for change new password
+  - **Endpoint:** `GET /api/v1/account/{id}/reset`
+  - **Header:**
+  - Requires: `Id`
+  - **Response**: 
+  - **Request Body Example:**
+    ```json
+    {
+      "oldPass": "12345",
+      "newPass": "password123"
+    }
+    ```  
+
+
+- **Get By ID:**
+  - User only can access infomation account from their id. They can't find other account (security purpose).
+  - **Endpoint:** `GET /api/v1/account/{id}`
+  - **Header:** `Authorization`
+  - **Response**: Account hava `id`
+  - **Request Body Example:**
+
+
+- **Put By ID:**
+  - User only can access infomation account from their id. They can't find other account (security purpose).
+  - **Endpoint:** `PUT /api/v1/account/{id}`
+  - **Header:** `Authorization`
+  - **Response**: Account hava `id`
+  - **Request Body Example:** `name`, `email`, `avatar` Can be null field but can't null for all field
+    ```json
+    {
+      "name": "Phat",
+      "email": "px4.vnd@gmail.com",
+      "avatar": "/"
+    }
+    ```  
+
       
 

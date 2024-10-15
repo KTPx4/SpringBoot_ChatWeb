@@ -1,4 +1,4 @@
-package com.Px4.ChatAPI.controllers.Account;
+package com.Px4.ChatAPI.services;
 
 import com.Px4.ChatAPI.controllers.JWT.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
+
 @Service
 public class AccountService {
 
@@ -85,10 +85,15 @@ public class AccountService {
 
         if (accountOptional.isPresent()) {
             AccountModel account = accountOptional.get();
+
             account.setName(accountDetails.getName());
             account.setUsername(accountDetails.getUsername());
             account.setPassword(accountDetails.getPassword());
+            account.setImage(accountDetails.getImage());
+            account.setEmail(accountDetails.getEmail());
             account.setRole(accountDetails.getRole());
+            account.setStatus(accountDetails.getStatus());
+
             return accountRepository.save(account);
         } else {
             throw new RuntimeException("Account not found with id: " + id);
@@ -107,7 +112,7 @@ public class AccountService {
         return token;
     }
 
-    public String changePass(String password, String newPassword) throws Exception
+    public String changePass( String password, String newPassword) throws Exception
     {
         String idUser = JwtRequestFilter.getIdfromJWT();
         Optional<AccountModel> acc = accountRepository.findById(idUser);

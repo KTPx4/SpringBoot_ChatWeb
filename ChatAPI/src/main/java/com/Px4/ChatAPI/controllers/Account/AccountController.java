@@ -2,24 +2,19 @@ package com.Px4.ChatAPI.controllers.Account;
 
 
 import com.Px4.ChatAPI.config.ResponeMessage;
+import com.Px4.ChatAPI.controllers.JWT.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
 import com.Px4.ChatAPI.models.BaseRespone;
-import com.Px4.ChatAPI.models.account.AccountModel;
-import com.Px4.ChatAPI.models.account.ChangePassModel;
-import com.Px4.ChatAPI.models.account.LoginModel;
-import com.Px4.ChatAPI.models.account.RegisterModel;
+import com.Px4.ChatAPI.models.account.*;
+import com.Px4.ChatAPI.services.AccountService;
+import com.Px4.ChatAPI.services.gmail.SendMailService;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -32,6 +27,9 @@ public class AccountController {
 
     @Autowired
     AccountService accounService;
+
+    @Autowired
+    SendMailService sendMailService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -52,12 +50,31 @@ public class AccountController {
         return accounService.getAllAccounts();
     }
 
+    @GetMapping("/{id}/reset") // For reset Password
+    public ResponseEntity<BaseRespone> resetPass(@PathVariable String id)
+    {
+        String mess = ResponeMessage.updateSuccess;
+        HttpStatus status = HttpStatus.OK;
+        try{
+            sendMailService.submitContactRequest("px4.vnd@gmail.com","test", "hihi");
+        }
+        catch (Exception e)
+        {
+            System.out.println(e);
+            mess = e.getMessage();
+            status = HttpStatus.BAD_REQUEST;
+        }
+        return new ResponseEntity<>(new BaseRespone(mess, null), status);
+
+    }
+
+
     @GetMapping("/{id}")
-    public ResponseEntity<BaseRespone> getById(@PathVariable String id, @RequestHeader("Authorization") String authorizationHeader) {
+    public ResponseEntity<BaseRespone> getById(@PathVariable String id) {
 
         // Lấy JWT token từ header và loại bỏ phần "Bearer "
-        String jwtToken = authorizationHeader.replace("Bearer ", "");
-
+        //String jwtToken = authorizationHeader.replace("Bearer ", "");
+        String jwtToken = JwtRequestFilter.getJwtToken();
         String mess = ResponeMessage.getSucce;
         HttpStatus status = HttpStatus.OK;
         Optional<AccountModel> account = null;
@@ -86,21 +103,71 @@ public class AccountController {
         return new ResponseEntity<>(new BaseRespone(mess, account), status);
     }
 
+     @PutMapping("/{id}")
+    public ResponseEntity<BaseRespone> putById(@PathVariable String id, @RequestBody UpdateModel updateAccount) {
+
+        // Lấy JWT token từ header và loại bỏ phần "Bearer "
+        //String jwtToken = authorizationHeader.replace("Bearer ", "");
+        String jwtToken = JwtRequestFilter.getJwtToken();
+        String mess = ResponeMessage.updateSuccess;
+        HttpStatus status = HttpStatus.OK;
+        Optional<AccountModel> acc = null;
+
+        try{
+            // Giải mã JWT để lấy thông tin người dùng
+            String userIdFromToken = jwtUtil.extractID(jwtToken); // Giả sử hàm extractUserId sẽ lấy được ID từ token
+
+            // So sánh ID từ token với ID mà client yêu cầu
+            if (id.equals(userIdFromToken)) {
+                // Nếu khớp, tiếp tục
+                acc = accounService.getAccountById(id);
+                if(acc.isEmpty()) throw new Exception(ResponeMessage.userNotfound);
+
+                AccountModel account = acc.get();
+
+                if (updateAccount.getName() != null) {
+                    account.setName(updateAccount.getName());
+                }
+                if (updateAccount.getEmail() != null) {
+                    if(!isValidEmail(updateAccount.getEmail())) throw new Exception(ResponeMessage.invalidEmail);
+
+                    account.setEmail(updateAccount.getEmail());
+                }
+                if (updateAccount.getAvatar() != null) {
+                    account.setImage(updateAccount.getAvatar());
+                }
+                accounService.updateAccount(id, account);
+            }
+            else{
+                mess = ResponeMessage.Forbidden;
+                status = HttpStatus.FORBIDDEN;
+            }
+
+        }
+        catch (Exception e)
+        {
+            mess = e.getMessage();
+            status = HttpStatus.UNAUTHORIZED;
+        }
+
+        return new ResponseEntity<>(new BaseRespone(mess, updateAccount), status);
+    }
+
 
     @PostMapping("/register")
     public ResponseEntity<BaseRespone> addAccount(@RequestBody RegisterModel registerAccount)
     {
 
-        String mess = "Create Success";
+        String mess = ResponeMessage.createSuccess;
         HttpStatus status = HttpStatus.CREATED;
 
         try{
 
             String messs = "";
-            if (registerAccount.getUsername() == null || registerAccount.getUsername().isEmpty())  messs = ("Username is required");
-            else if (registerAccount.getPassword() == null || registerAccount.getPassword().isEmpty()) messs =  ("Password is required");
-            else if (registerAccount.getEmail() == null || registerAccount.getEmail().isEmpty()) messs = ("Email is required");
-            else if(!isValidEmail(registerAccount.getEmail())) messs = ("Email is invalid");
+            if (registerAccount.getUsername() == null || registerAccount.getUsername().isEmpty())  messs = ResponeMessage.userRequire;
+            else if (registerAccount.getPassword() == null || registerAccount.getPassword().isEmpty()) messs =  ResponeMessage.passRequire;
+            else if (registerAccount.getEmail() == null || registerAccount.getEmail().isEmpty()) messs = ResponeMessage.emailRequire;
+            else if(!isValidEmail(registerAccount.getEmail())) messs = ResponeMessage.invalidEmail;
 
             if(!messs.isEmpty()) throw new Exception("create-" + messs);
 
@@ -134,32 +201,31 @@ public class AccountController {
 
     // Đăng nhập: nhận username và password, trả về JWT nếu thông tin đúng
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody LoginModel authRequest) throws Exception {
+    public ResponseEntity<BaseRespone> login(@RequestBody LoginModel authRequest) throws Exception {
         Map<String, String> res = new HashMap<>();
         try {
 
             AccountModel account = accounService.getAccountByUsername(authRequest.getUsername())
-                    .orElseThrow(() -> new Exception("User not found"));
+                    .orElseThrow(() -> new Exception(ResponeMessage.incorrectLogin));
 
             // Kiểm tra mật khẩu
             if (!passwordEncoder.matches(authRequest.getPassword(), account.getPassword())) {
-                throw new Exception("Incorrect password");
+                throw new Exception(ResponeMessage.incorrectLogin);
             }
 
             // Tạo JWT sau khi xác thực thành công
 
             String jwt = jwtUtil.generateToken(account.getId());
 
-            // Trả về JWT cho người dùng
-            res.put("token", jwt);
-            return res;
+            return new ResponseEntity<>(new BaseRespone(ResponeMessage.loginSuccess, jwt), HttpStatus.OK );
 
         }
         catch (Exception e)
         {
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+
             res.put("message", e.getMessage());
-            return  res;
+            return new ResponseEntity<>(new BaseRespone(e.getMessage(), null), HttpStatus.UNAUTHORIZED );
+
         }
     }
 
@@ -180,10 +246,10 @@ public class AccountController {
 
     }
 
-    @PutMapping("/password")
+    @PostMapping("/password")
     public ResponseEntity<BaseRespone> chagePassword(@RequestBody ChangePassModel changePassModel)
     {
-        String mess = ResponeMessage.changeSuccess;
+        String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
 
         String oldpass = changePassModel.getOldPass();
@@ -191,11 +257,11 @@ public class AccountController {
         String newToken = null;
         try{
             if(oldpass == null ||newpass == null || oldpass.isEmpty() || newpass.isEmpty() ) throw new Exception("change-oldPass and newPass must not null");
-            newToken = accounService.changePass(oldpass, newpass); // create account
+            newToken = accounService.changePass( oldpass, newpass); // create account
         }
         catch (Exception e)
         {
-            System.out.println(e.getMessage());
+            // System.out.println(e.getMessage());
             status = HttpStatus.BAD_REQUEST;
             String fail = "Change password failed";
             if(e.getMessage().toLowerCase().contains("change"))
@@ -203,7 +269,7 @@ public class AccountController {
                 String eMess = e.getMessage().split("-")[1]; // get exception message
                 mess =  fail +": "+ eMess ;
             }
-           else
+            else
             {
                 mess = fail + "." +" Try Again!";
                 status = HttpStatus.INTERNAL_SERVER_ERROR;
