@@ -1,5 +1,7 @@
 package com.Px4.ChatAPI.controllers.Account;
 
+import com.Px4.ChatAPI.controllers.JWT.JwtRequestFilter;
+import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
 import com.Px4.ChatAPI.models.JWT.BlackListModel;
 import com.Px4.ChatAPI.models.JWT.BlackListRepository;
 import com.Px4.ChatAPI.models.account.AccountModel;
@@ -22,6 +24,8 @@ public class AccountService {
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
     private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Autowired
     public AccountService(AccountRepository accountRepository, PasswordEncoder passwordEncoder) {
@@ -29,18 +33,6 @@ public class AccountService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Định nghĩa pattern để kiểm tra email
-    private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
-
-    private static final Pattern pattern = Pattern.compile(EMAIL_PATTERN);
-
-    // Hàm kiểm tra tính hợp lệ của email
-    public static boolean isValidEmail(String email) {
-        if (email == null) {
-            return false;
-        }
-        return pattern.matcher(email).matches();
-    }
 
     //Generate ID for new account
     public String generateID(String id )
@@ -59,14 +51,7 @@ public class AccountService {
 
     // Tạo mới tài khoản
     public AccountModel createAccount(RegisterModel registerAccount) throws Exception {
-        String mess = "";
 
-        if (registerAccount.getUsername() == null || registerAccount.getUsername().isEmpty())  mess = ("Username is required");
-        else if (registerAccount.getPassword() == null || registerAccount.getPassword().isEmpty()) mess =  ("Password is required");
-        else if (registerAccount.getEmail() == null || registerAccount.getEmail().isEmpty()) mess = ("Email is required");
-        else if(!isValidEmail(registerAccount.getEmail())) mess = ("Email is invalid");
-
-        if(!mess.isEmpty()) throw new Exception("create-" + mess);
 
         Optional<AccountModel> findAcc = accountRepository.findByUsername(registerAccount.getUsername());
 
@@ -115,10 +100,29 @@ public class AccountService {
         accountRepository.deleteById(id);
     }
 
-    public void logOut(String token)
+    public String logOut()
     {
+        String token = JwtRequestFilter.getJwtToken();
         blackListRepository.save(new BlackListModel(blackListRepository.count() + 1 ,token));
+        return token;
+    }
 
+    public String changePass(String password, String newPassword) throws Exception
+    {
+        String idUser = JwtRequestFilter.getIdfromJWT();
+        Optional<AccountModel> acc = accountRepository.findById(idUser);
+
+        if(acc.isEmpty()) throw new Exception("change-User not found");
+
+        if(!passwordEncoder.matches(password, acc.get().getPassword())) throw new Exception("change-Old Password incorrect");
+        AccountModel accUpdate = acc.get();
+        accUpdate.setPassword(passwordEncoder.encode(newPassword));
+
+        updateAccount(idUser, accUpdate);
+        logOut();
+        String newToken = jwtUtil.generateToken(idUser);
+
+        return newToken;
     }
 
 }

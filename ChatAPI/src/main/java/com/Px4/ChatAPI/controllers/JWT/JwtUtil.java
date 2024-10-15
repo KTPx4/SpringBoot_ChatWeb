@@ -1,6 +1,7 @@
 package com.Px4.ChatAPI.controllers.JWT;
 
 
+import com.Px4.ChatAPI.config.ResponeMessage;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -53,7 +54,7 @@ public class JwtUtil {
         }
         catch (Exception e)
         {
-            throw new Exception("Invalid Token or Token Expired");
+            throw new Exception(ResponeMessage.jwtInvalid);
         }
 
 

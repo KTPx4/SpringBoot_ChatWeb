@@ -49,7 +49,20 @@ This project is a chat application consisting of an API server (`ChatAPI` - Spri
   - **Header:** `Authorization`
     - **Response**: Account hava `id` 
   - **Request Body Example:**
-  
+
+
+- **Change Password**
+  - **Endpoint:** `PUT /api/v1/account/password`
+  - **Header:** `Authorization`
+  - Requires `oldPass` and `newPass`.
+  - **Response**: New password will update if oldpass validated. Response JWT token after update success.
+  - **Request Body Example:**
+    ```json
+    {
+      "oldPass": "12345",
+      "newPass": "password123"
+    }
+    ```   
   
       
 

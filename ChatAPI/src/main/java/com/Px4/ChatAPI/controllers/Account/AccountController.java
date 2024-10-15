@@ -5,6 +5,7 @@ import com.Px4.ChatAPI.config.ResponeMessage;
 import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
 import com.Px4.ChatAPI.models.BaseRespone;
 import com.Px4.ChatAPI.models.account.AccountModel;
+import com.Px4.ChatAPI.models.account.ChangePassModel;
 import com.Px4.ChatAPI.models.account.LoginModel;
 import com.Px4.ChatAPI.models.account.RegisterModel;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,11 +22,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
+import java.util.*;
+import java.util.regex.Pattern;
 
 
 @RestController
@@ -97,14 +95,24 @@ public class AccountController {
         HttpStatus status = HttpStatus.CREATED;
 
         try{
+
+            String messs = "";
+            if (registerAccount.getUsername() == null || registerAccount.getUsername().isEmpty())  messs = ("Username is required");
+            else if (registerAccount.getPassword() == null || registerAccount.getPassword().isEmpty()) messs =  ("Password is required");
+            else if (registerAccount.getEmail() == null || registerAccount.getEmail().isEmpty()) messs = ("Email is required");
+            else if(!isValidEmail(registerAccount.getEmail())) messs = ("Email is invalid");
+
+            if(!messs.isEmpty()) throw new Exception("create-" + messs);
+
             accounService.createAccount(registerAccount); // create account
+
         }
         catch (Exception e)
         {
             System.out.println(e.getMessage());
             status = HttpStatus.BAD_REQUEST;
 
-            if(e.getMessage().contains("create"))
+            if(e.getMessage().toLowerCase().contains("create"))
             {
                 String eMess = e.getMessage().split("-")[1]; // get exception message
                 mess = "Create Failed: " + eMess ;
@@ -157,16 +165,66 @@ public class AccountController {
 
 
     @PostMapping("/logout")
-    public ResponseEntity<BaseRespone> logout(@RequestHeader("Authorization") String authorizationHeader)
+    public ResponseEntity<BaseRespone> logout()
     {
         // logic for  add token to black list
-        //////////////////
-        String token = authorizationHeader.replace("Bearer ", "");
-        accounService.logOut(token);
+        try{
 
-        return new ResponseEntity<>(new BaseRespone("logout success. The token has been deleted", token), HttpStatus.OK);
+            String token = accounService.logOut();
+
+            return new ResponseEntity<>(new BaseRespone("logout success. The token has been deleted", token), HttpStatus.OK);
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(new BaseRespone("Error!. Try again", null), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     }
 
+    @PutMapping("/password")
+    public ResponseEntity<BaseRespone> chagePassword(@RequestBody ChangePassModel changePassModel)
+    {
+        String mess = ResponeMessage.changeSuccess;
+        HttpStatus status = HttpStatus.OK;
+
+        String oldpass = changePassModel.getOldPass();
+        String newpass = changePassModel.getNewPass();
+        String newToken = null;
+        try{
+            if(oldpass == null ||newpass == null || oldpass.isEmpty() || newpass.isEmpty() ) throw new Exception("change-oldPass and newPass must not null");
+            newToken = accounService.changePass(oldpass, newpass); // create account
+        }
+        catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+            status = HttpStatus.BAD_REQUEST;
+            String fail = "Change password failed";
+            if(e.getMessage().toLowerCase().contains("change"))
+            {
+                String eMess = e.getMessage().split("-")[1]; // get exception message
+                mess =  fail +": "+ eMess ;
+            }
+           else
+            {
+                mess = fail + "." +" Try Again!";
+                status = HttpStatus.INTERNAL_SERVER_ERROR;
+            }
+        }
+
+        return new ResponseEntity<>(new BaseRespone(mess, newToken), status );
+    }
+
+    // Định nghĩa pattern để kiểm tra email
+    private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+
+    private static final Pattern pattern = Pattern.compile(EMAIL_PATTERN);
+
+    // Hàm kiểm tra tính hợp lệ của email
+    public static boolean isValidEmail(String email) {
+        if (email == null) {
+            return false;
+        }
+        return pattern.matcher(email).matches();
+    }
 
 }
 
