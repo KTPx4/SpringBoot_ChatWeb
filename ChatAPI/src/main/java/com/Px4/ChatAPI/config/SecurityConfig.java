@@ -1,11 +1,10 @@
 package com.Px4.ChatAPI.config;
 
 
-import com.Px4.ChatAPI.controllers.JWT.JwtRequestFilter;
-import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
+import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
+import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
 import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.account.AccountRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

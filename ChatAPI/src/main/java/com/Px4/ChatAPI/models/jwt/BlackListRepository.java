@@ -1,4 +1,4 @@
-package com.Px4.ChatAPI.models.JWT;
+package com.Px4.ChatAPI.models.jwt;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 

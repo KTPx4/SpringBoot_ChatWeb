@@ -1,8 +1,7 @@
 package com.Px4.ChatAPI.controllers.socket;
 
-import com.Px4.ChatAPI.models.Message.MessageChat;
+import com.Px4.ChatAPI.models.message.MessageChat;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;

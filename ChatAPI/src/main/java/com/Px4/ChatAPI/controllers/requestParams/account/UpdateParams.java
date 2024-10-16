@@ -1,6 +1,6 @@
-package com.Px4.ChatAPI.models.account;
+package com.Px4.ChatAPI.controllers.requestParams.account;
 
-public class UpdateModel {
+public class UpdateParams {
     private String name;
     private String avatar;
     private String email;

@@ -77,7 +77,7 @@ public class BodySend {
                             <h1>Khôi phục mật khẩu</h1>
                         </div>
                         <div class="content">
-                            <h3>Xin chào bạn,</h3>
+                            <h4>Xin chào bạn,</h4>
                             <p>Để khôi phục lại tài khoản, vui lòng nhấp vào đường dẫn <a href="%s">Tại đây</a> để đặt lại mật khẩu của bạn.</p>
                             <p>Liên kết sẽ hết hạn sau <b>5 phút</b></p>
                             </br>

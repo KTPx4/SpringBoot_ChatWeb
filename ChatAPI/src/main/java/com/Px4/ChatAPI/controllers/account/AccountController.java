@@ -1,16 +1,16 @@
-package com.Px4.ChatAPI.controllers.Account;
+package com.Px4.ChatAPI.controllers.account;
 
 
 import com.Px4.ChatAPI.config.ResponeMessage;
-import com.Px4.ChatAPI.controllers.JWT.JwtRequestFilter;
-import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
+import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
+import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
+import com.Px4.ChatAPI.controllers.requestParams.account.*;
 import com.Px4.ChatAPI.models.BaseRespone;
+import com.Px4.ChatAPI.models.ConverDateTime;
 import com.Px4.ChatAPI.models.account.*;
-import com.Px4.ChatAPI.models.gmail.BodySend;
 import com.Px4.ChatAPI.services.AccountService;
 import com.Px4.ChatAPI.services.gmail.SendMailService;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -54,20 +55,30 @@ public class AccountController {
 
     
     @PostMapping("/reset") // For reset Password
-    public ResponseEntity<BaseRespone> sendReset(@RequestBody String id)
+    public ResponseEntity<BaseRespone> sendReset(@RequestBody ResetParams resetParams)
     {
+        String id = resetParams.getId();
+      //  System.out.println(id);
         String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
         try{
             // handle for get email by id and generate token to send
-            sendMailService.submitContactRequest("hayday1.px4@gmail.com","Khôi phục mật khẩu",
-                    BodySend.body("http://localhost:8080/account/reset?token=123456"));
+            accounService.sendReset(id);
         }
         catch (Exception e)
         {
-            System.out.println(e);
-            mess = e.getMessage();
             status = HttpStatus.BAD_REQUEST;
+            String fail = "Reset password failed";
+            if(e.getMessage().toLowerCase().startsWith("reset"))
+            {
+                String eMess = e.getMessage().split("-")[1]; // get exception message
+                mess =  fail +": "+ eMess ;
+            }
+            else
+            {
+                mess = fail + "." +" Try Again!";
+                status = HttpStatus.INTERNAL_SERVER_ERROR;
+            }
         }
         return new ResponseEntity<>(new BaseRespone(mess , id), status);
 
@@ -128,7 +139,7 @@ public class AccountController {
     }
 
      @PutMapping("/{id}")
-    public ResponseEntity<BaseRespone> putById(@PathVariable String id, @RequestBody UpdateModel updateAccount) {
+    public ResponseEntity<BaseRespone> putById(@PathVariable String id, @RequestBody UpdateParams updateAccount) {
 
         // Lấy JWT token từ header và loại bỏ phần "Bearer "
         //String jwtToken = authorizationHeader.replace("Bearer ", "");
@@ -179,7 +190,7 @@ public class AccountController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<BaseRespone> addAccount(@RequestBody RegisterModel registerAccount)
+    public ResponseEntity<BaseRespone> addAccount(@RequestBody RegisterParams registerAccount)
     {
 
         String mess = ResponeMessage.createSuccess;
@@ -203,12 +214,12 @@ public class AccountController {
             System.out.println(e.getMessage());
             status = HttpStatus.BAD_REQUEST;
 
-            if(e.getMessage().toLowerCase().contains("create"))
+            if(e.getMessage().toLowerCase().startsWith("create"))
             {
                 String eMess = e.getMessage().split("-")[1]; // get exception message
                 mess = "Create Failed: " + eMess ;
             }
-            else if(e.getMessage().contains("null"))
+            else if(e.getMessage().startsWith("null"))
             {
                 mess = "Create Failed: " + e.getMessage() ;
             }
@@ -225,7 +236,7 @@ public class AccountController {
 
     // Đăng nhập: nhận username và password, trả về JWT nếu thông tin đúng
     @PostMapping("/login")
-    public ResponseEntity<BaseRespone> login(@RequestBody LoginModel authRequest) throws Exception {
+    public ResponseEntity<BaseRespone> login(@RequestBody LoginParams authRequest) throws Exception {
         Map<String, String> res = new HashMap<>();
         try {
 
@@ -265,13 +276,14 @@ public class AccountController {
             return new ResponseEntity<>(new BaseRespone("logout success. The token has been deleted", token), HttpStatus.OK);
 
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return new ResponseEntity<>(new BaseRespone("Error!. Try again", null), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
     @PostMapping("/password")
-    public ResponseEntity<BaseRespone> chagePassword(@RequestBody ChangePassModel changePassModel)
+    public ResponseEntity<BaseRespone> chagePassword(@RequestBody ChangePassParams changePassModel)
     {
         String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
@@ -288,7 +300,7 @@ public class AccountController {
             // System.out.println(e.getMessage());
             status = HttpStatus.BAD_REQUEST;
             String fail = "Change password failed";
-            if(e.getMessage().toLowerCase().contains("change"))
+            if(e.getMessage().toLowerCase().startsWith("change"))
             {
                 String eMess = e.getMessage().split("-")[1]; // get exception message
                 mess =  fail +": "+ eMess ;

@@ -1,4 +1,4 @@
-package com.Px4.ChatAPI.models.Message;
+package com.Px4.ChatAPI.models.message;
 
 
 public class MessageChat {
