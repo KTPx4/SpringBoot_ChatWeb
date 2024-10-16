@@ -1,13 +1,16 @@
 package com.Px4.ChatAPI.services;
 
-import com.Px4.ChatAPI.controllers.JWT.JwtRequestFilter;
-import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
-import com.Px4.ChatAPI.models.JWT.BlackListModel;
-import com.Px4.ChatAPI.models.JWT.BlackListRepository;
-import com.Px4.ChatAPI.models.account.AccountModel;
-import com.Px4.ChatAPI.models.account.AccountRepository;
-import com.Px4.ChatAPI.models.account.RegisterModel;
+import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
+import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
+import com.Px4.ChatAPI.controllers.requestParams.account.RegisterParams;
+import com.Px4.ChatAPI.models.ConverDateTime;
+import com.Px4.ChatAPI.models.jwt.BlackListModel;
+import com.Px4.ChatAPI.models.jwt.BlackListRepository;
+import com.Px4.ChatAPI.models.account.*;
+import com.Px4.ChatAPI.models.gmail.BodySend;
+import com.Px4.ChatAPI.services.gmail.SendMailService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,39 +21,74 @@ import java.util.Optional;
 @Service
 public class AccountService {
 
-    @Autowired
-    private BlackListRepository blackListRepository;
+    @Value( "${spring.application.host}")
+    private String HOST;
+
+    @Value( "${spring.application.port}")
+    private String PORT;
+
+    @Value( "${spring.application.protocol}")
+    private String PROTOCOL;
+    @Value( "${spring.application.apiversion}")
+    private String VERSION;
+
+    private final BlackListRepository blackListRepository;
+    private final ResetRepository resetRepository;
     private final AccountRepository accountRepository;
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
     private final PasswordEncoder passwordEncoder;
-    @Autowired
     private JwtUtil jwtUtil;
+    private SendMailService sendMailService;
 
     @Autowired
-    public AccountService(AccountRepository accountRepository, PasswordEncoder passwordEncoder) {
+    public AccountService(BlackListRepository blackListRepository, ResetRepository resetRepository, AccountRepository accountRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, SendMailService sendMailService) {
+        this.blackListRepository = blackListRepository;
+        this.resetRepository = resetRepository;
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
+        this.sendMailService = sendMailService;
     }
 
 
     //Generate ID for new account
-    public String generateID(String id )
+    public String generateID()
     {
-        if(accountRepository.existsById(id)) id = generateID("");
+        String id = "";
 
-        while(id.length() < 10)
-        {
-            int index = RANDOM.nextInt(CHARACTERS.length());
-            id = id + CHARACTERS.charAt(index);
-            generateID(id);
+        while (accountRepository.existsById(id) || id.isEmpty()) {
+            StringBuilder tokenBuilder = new StringBuilder();
+            for (int i = 0; i < 12; i++) {
+                int index = RANDOM.nextInt(CHARACTERS.length());
+                tokenBuilder.append(CHARACTERS.charAt(index));
+            }
+            id = tokenBuilder.toString();
         }
 
         return id;
     }
 
+    //Generate token for new reset account
+    public String generateToken() {
+        String token = "";
+
+        // Tạo token mới nếu token hiện tại đã tồn tại trong resetRepository
+        while (resetRepository.existsByToken(token) || token.isEmpty()) {
+            StringBuilder tokenBuilder = new StringBuilder();
+            for (int i = 0; i < 12; i++) {
+                int index = RANDOM.nextInt(CHARACTERS.length());
+                tokenBuilder.append(CHARACTERS.charAt(index));
+            }
+            token = tokenBuilder.toString();
+        }
+
+        return token;
+    }
+
+
     // Tạo mới tài khoản
-    public AccountModel createAccount(RegisterModel registerAccount) throws Exception {
+    public AccountModel createAccount(RegisterParams registerAccount) throws Exception {
 
 
         Optional<AccountModel> findAcc = accountRepository.findByUsername(registerAccount.getUsername());
@@ -59,7 +97,7 @@ public class AccountService {
 
 
         AccountModel account = new AccountModel(registerAccount);
-        account.setId(generateID(""));
+        account.setId(generateID());
         account.setPassword(passwordEncoder.encode(account.getPassword())); // encode password
         return accountRepository.save(account);
     }
@@ -108,7 +146,9 @@ public class AccountService {
     public String logOut()
     {
         String token = JwtRequestFilter.getJwtToken();
-        blackListRepository.save(new BlackListModel(blackListRepository.count() + 1 ,token));
+        BlackListModel blackListModel = BlackListModel.createWithCurrentTime(blackListRepository.count() + 1 ,token);
+        blackListRepository.save( blackListModel);
+        ConverDateTime.toHCMtime(blackListModel.getCreatedAt());
         return token;
     }
 
@@ -130,4 +170,26 @@ public class AccountService {
         return newToken;
     }
 
+    public boolean sendReset(String id) throws Exception
+    {
+
+        Optional<AccountModel> acc = getAccountById(id);
+
+        if(acc.isEmpty()) throw new Exception("reset-User not found");
+        if(resetRepository.existsByUserId(id)) throw new Exception("reset-An email has been sent. Please check your inbox!");
+
+        String token = generateToken();
+        String email = acc.get().getEmail();
+        ResetModel resetAcc = new ResetModel(id, token);
+
+        resetRepository.save(resetAcc);
+
+        String href = String.format("%s://%s:%s/%s/account/reset?token=%s", PROTOCOL, HOST, PORT, VERSION, token);
+//        System.out.println("RUN OK:"+ href);
+
+        sendMailService.submitContactRequest( email,"Khôi phục mật khẩu",
+                BodySend.body(href));
+
+        return true;
+    }
 }

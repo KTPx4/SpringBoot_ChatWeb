@@ -1,6 +1,6 @@
-package com.Px4.ChatAPI.models.account;
+package com.Px4.ChatAPI.controllers.requestParams.account;
 
-public class LoginModel {
+public class LoginParams {
     private String username;
     private String password;
 
@@ -20,4 +20,5 @@ public class LoginModel {
     public void setPassword(String password) {
         this.password = password;
     }
+
 }

@@ -1,6 +1,6 @@
-package com.Px4.ChatAPI.models.account;
+package com.Px4.ChatAPI.controllers.requestParams.account;
 
-public class ChangePassModel {
+public class ChangePassParams {
     private String oldPass;
     private String newPass;
 

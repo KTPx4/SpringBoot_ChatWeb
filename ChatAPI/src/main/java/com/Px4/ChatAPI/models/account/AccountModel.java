@@ -1,6 +1,7 @@
 package com.Px4.ChatAPI.models.account;
 
 
+import com.Px4.ChatAPI.controllers.requestParams.account.RegisterParams;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -34,7 +35,7 @@ public class AccountModel {
         this.name = username;
     }
 
-    public AccountModel(RegisterModel registerAcc) {
+    public AccountModel(RegisterParams registerAcc) {
         this.username = registerAcc.getUsername();
         this.password = registerAcc.getPassword();
         this.email = registerAcc.getEmail();

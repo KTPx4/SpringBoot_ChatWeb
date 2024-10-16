@@ -1,7 +1,7 @@
-package com.Px4.ChatAPI.models.account;
+package com.Px4.ChatAPI.controllers.requestParams.account;
 
 
-public class RegisterModel {
+public class RegisterParams {
 
     private String username;
 

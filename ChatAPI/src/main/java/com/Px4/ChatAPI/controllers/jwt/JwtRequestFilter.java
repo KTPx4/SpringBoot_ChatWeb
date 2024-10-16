@@ -1,9 +1,10 @@
-    package com.Px4.ChatAPI.controllers.JWT;
+    package com.Px4.ChatAPI.controllers.jwt;
 
 
+    import com.Px4.ChatAPI.config.IgnoreRequest;
     import com.Px4.ChatAPI.config.ResponeMessage;
     import com.Px4.ChatAPI.services.AccountService;
-    import com.Px4.ChatAPI.models.JWT.BlackListRepository;
+    import com.Px4.ChatAPI.models.jwt.BlackListRepository;
     import com.Px4.ChatAPI.models.account.AccountModel;
     import com.Px4.ChatAPI.models.account.AccountRepository;
     import jakarta.servlet.FilterChain;

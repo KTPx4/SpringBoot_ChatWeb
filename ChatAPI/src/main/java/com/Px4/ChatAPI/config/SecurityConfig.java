@@ -1,11 +1,10 @@
 package com.Px4.ChatAPI.config;
 
 
-import com.Px4.ChatAPI.controllers.JWT.JwtRequestFilter;
-import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
+import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
+import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
 import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.account.AccountRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -72,11 +71,20 @@ public class SecurityConfig {
         http
 
                 .csrf(s->s.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/account/login").permitAll()
-                        .requestMatchers("/api/v1/account/register").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .anyRequest().authenticated()
+                .authorizeHttpRequests(auth ->
+//                        auth
+//                        .requestMatchers("/api/v1/account/login").permitAll()
+//                        .requestMatchers("/api/v1/account/register").permitAll()
+//                        .requestMatchers("/ws/**").permitAll()
+//                        .anyRequest().authenticated()
+                    {
+                        try{
+                            IgnoreRequest.getIgnoreList().forEach(ignore -> auth.requestMatchers(ignore).permitAll());
+                            auth.anyRequest().authenticated();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
                 )
                 .exceptionHandling(excH -> excH.accessDeniedHandler(customAccessDeniedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

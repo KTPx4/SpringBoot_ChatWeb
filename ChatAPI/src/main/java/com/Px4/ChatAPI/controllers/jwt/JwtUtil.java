@@ -1,7 +1,8 @@
-package com.Px4.ChatAPI.controllers.JWT;
+package com.Px4.ChatAPI.controllers.jwt;
 
 
 import com.Px4.ChatAPI.config.ResponeMessage;
+import com.Px4.ChatAPI.models.jwt.BlackListModel;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -69,7 +70,7 @@ public class JwtUtil {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 7)) // Token valid for 7 day
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * BlackListModel.TIME_LIVE)) // Token valid for 7 day
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY.getBytes())
                 .compact();
     }

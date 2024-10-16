@@ -1,10 +1,12 @@
-package com.Px4.ChatAPI.controllers.Account;
+package com.Px4.ChatAPI.controllers.account;
 
 
 import com.Px4.ChatAPI.config.ResponeMessage;
-import com.Px4.ChatAPI.controllers.JWT.JwtRequestFilter;
-import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
+import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
+import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
+import com.Px4.ChatAPI.controllers.requestParams.account.*;
 import com.Px4.ChatAPI.models.BaseRespone;
+import com.Px4.ChatAPI.models.ConverDateTime;
 import com.Px4.ChatAPI.models.account.*;
 import com.Px4.ChatAPI.services.AccountService;
 import com.Px4.ChatAPI.services.gmail.SendMailService;
@@ -17,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -50,13 +53,44 @@ public class AccountController {
         return accounService.getAllAccounts();
     }
 
-    @GetMapping("/{id}/reset") // For reset Password
-    public ResponseEntity<BaseRespone> resetPass(@PathVariable String id)
+    
+    @PostMapping("/reset") // For reset Password
+    public ResponseEntity<BaseRespone> sendReset(@RequestBody ResetParams resetParams)
+    {
+        String id = resetParams.getId();
+      //  System.out.println(id);
+        String mess = ResponeMessage.updateSuccess;
+        HttpStatus status = HttpStatus.OK;
+        try{
+            // handle for get email by id and generate token to send
+            accounService.sendReset(id);
+        }
+        catch (Exception e)
+        {
+            status = HttpStatus.BAD_REQUEST;
+            String fail = "Reset password failed";
+            if(e.getMessage().toLowerCase().startsWith("reset"))
+            {
+                String eMess = e.getMessage().split("-")[1]; // get exception message
+                mess =  fail +": "+ eMess ;
+            }
+            else
+            {
+                mess = fail + "." +" Try Again!";
+                status = HttpStatus.INTERNAL_SERVER_ERROR;
+            }
+        }
+        return new ResponseEntity<>(new BaseRespone(mess , id), status);
+
+    }
+
+    @GetMapping("/reset") // For reset Password
+    public ResponseEntity<BaseRespone> resetPass(@RequestParam(value = "token", defaultValue = "") String token)
     {
         String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
         try{
-            sendMailService.submitContactRequest("px4.vnd@gmail.com","test", "hihi");
+            mess = token;
         }
         catch (Exception e)
         {
@@ -67,8 +101,9 @@ public class AccountController {
         return new ResponseEntity<>(new BaseRespone(mess, null), status);
 
     }
-
-
+    
+    
+    ///// Need edit for user can use find some people  . If a people have been block they can't find by that user
     @GetMapping("/{id}")
     public ResponseEntity<BaseRespone> getById(@PathVariable String id) {
 
@@ -104,7 +139,7 @@ public class AccountController {
     }
 
      @PutMapping("/{id}")
-    public ResponseEntity<BaseRespone> putById(@PathVariable String id, @RequestBody UpdateModel updateAccount) {
+    public ResponseEntity<BaseRespone> putById(@PathVariable String id, @RequestBody UpdateParams updateAccount) {
 
         // Lấy JWT token từ header và loại bỏ phần "Bearer "
         //String jwtToken = authorizationHeader.replace("Bearer ", "");
@@ -155,7 +190,7 @@ public class AccountController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<BaseRespone> addAccount(@RequestBody RegisterModel registerAccount)
+    public ResponseEntity<BaseRespone> addAccount(@RequestBody RegisterParams registerAccount)
     {
 
         String mess = ResponeMessage.createSuccess;
@@ -179,12 +214,12 @@ public class AccountController {
             System.out.println(e.getMessage());
             status = HttpStatus.BAD_REQUEST;
 
-            if(e.getMessage().toLowerCase().contains("create"))
+            if(e.getMessage().toLowerCase().startsWith("create"))
             {
                 String eMess = e.getMessage().split("-")[1]; // get exception message
                 mess = "Create Failed: " + eMess ;
             }
-            else if(e.getMessage().contains("null"))
+            else if(e.getMessage().startsWith("null"))
             {
                 mess = "Create Failed: " + e.getMessage() ;
             }
@@ -201,7 +236,7 @@ public class AccountController {
 
     // Đăng nhập: nhận username và password, trả về JWT nếu thông tin đúng
     @PostMapping("/login")
-    public ResponseEntity<BaseRespone> login(@RequestBody LoginModel authRequest) throws Exception {
+    public ResponseEntity<BaseRespone> login(@RequestBody LoginParams authRequest) throws Exception {
         Map<String, String> res = new HashMap<>();
         try {
 
@@ -241,13 +276,14 @@ public class AccountController {
             return new ResponseEntity<>(new BaseRespone("logout success. The token has been deleted", token), HttpStatus.OK);
 
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return new ResponseEntity<>(new BaseRespone("Error!. Try again", null), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
     @PostMapping("/password")
-    public ResponseEntity<BaseRespone> chagePassword(@RequestBody ChangePassModel changePassModel)
+    public ResponseEntity<BaseRespone> chagePassword(@RequestBody ChangePassParams changePassModel)
     {
         String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
@@ -264,7 +300,7 @@ public class AccountController {
             // System.out.println(e.getMessage());
             status = HttpStatus.BAD_REQUEST;
             String fail = "Change password failed";
-            if(e.getMessage().toLowerCase().contains("change"))
+            if(e.getMessage().toLowerCase().startsWith("change"))
             {
                 String eMess = e.getMessage().split("-")[1]; // get exception message
                 mess =  fail +": "+ eMess ;
@@ -278,6 +314,7 @@ public class AccountController {
 
         return new ResponseEntity<>(new BaseRespone(mess, newToken), status );
     }
+
 
     // Định nghĩa pattern để kiểm tra email
     private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
