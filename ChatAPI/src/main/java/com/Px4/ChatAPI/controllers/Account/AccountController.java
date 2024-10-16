@@ -6,9 +6,11 @@ import com.Px4.ChatAPI.controllers.JWT.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.JWT.JwtUtil;
 import com.Px4.ChatAPI.models.BaseRespone;
 import com.Px4.ChatAPI.models.account.*;
+import com.Px4.ChatAPI.models.gmail.BodySend;
 import com.Px4.ChatAPI.services.AccountService;
 import com.Px4.ChatAPI.services.gmail.SendMailService;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,13 +52,34 @@ public class AccountController {
         return accounService.getAllAccounts();
     }
 
-    @GetMapping("/{id}/reset") // For reset Password
-    public ResponseEntity<BaseRespone> resetPass(@PathVariable String id)
+    
+    @PostMapping("/reset") // For reset Password
+    public ResponseEntity<BaseRespone> sendReset(@RequestBody String id)
     {
         String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
         try{
-            sendMailService.submitContactRequest("px4.vnd@gmail.com","test", "hihi");
+            // handle for get email by id and generate token to send
+            sendMailService.submitContactRequest("hayday1.px4@gmail.com","Khôi phục mật khẩu",
+                    BodySend.body("http://localhost:8080/account/reset?token=123456"));
+        }
+        catch (Exception e)
+        {
+            System.out.println(e);
+            mess = e.getMessage();
+            status = HttpStatus.BAD_REQUEST;
+        }
+        return new ResponseEntity<>(new BaseRespone(mess , id), status);
+
+    }
+
+    @GetMapping("/reset") // For reset Password
+    public ResponseEntity<BaseRespone> resetPass(@RequestParam(value = "token", defaultValue = "") String token)
+    {
+        String mess = ResponeMessage.updateSuccess;
+        HttpStatus status = HttpStatus.OK;
+        try{
+            mess = token;
         }
         catch (Exception e)
         {
@@ -67,8 +90,9 @@ public class AccountController {
         return new ResponseEntity<>(new BaseRespone(mess, null), status);
 
     }
-
-
+    
+    
+    ///// Need edit for user can use find some people  . If a people have been block they can't find by that user
     @GetMapping("/{id}")
     public ResponseEntity<BaseRespone> getById(@PathVariable String id) {
 
@@ -278,6 +302,7 @@ public class AccountController {
 
         return new ResponseEntity<>(new BaseRespone(mess, newToken), status );
     }
+
 
     // Định nghĩa pattern để kiểm tra email
     private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";

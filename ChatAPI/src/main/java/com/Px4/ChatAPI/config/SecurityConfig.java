@@ -72,11 +72,20 @@ public class SecurityConfig {
         http
 
                 .csrf(s->s.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/account/login").permitAll()
-                        .requestMatchers("/api/v1/account/register").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .anyRequest().authenticated()
+                .authorizeHttpRequests(auth ->
+//                        auth
+//                        .requestMatchers("/api/v1/account/login").permitAll()
+//                        .requestMatchers("/api/v1/account/register").permitAll()
+//                        .requestMatchers("/ws/**").permitAll()
+//                        .anyRequest().authenticated()
+                    {
+                        try{
+                            IgnoreRequest.getIgnoreList().forEach(ignore -> auth.requestMatchers(ignore).permitAll());
+                            auth.anyRequest().authenticated();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
                 )
                 .exceptionHandling(excH -> excH.accessDeniedHandler(customAccessDeniedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

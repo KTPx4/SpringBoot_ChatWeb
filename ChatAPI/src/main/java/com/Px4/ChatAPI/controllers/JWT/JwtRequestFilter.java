@@ -1,6 +1,7 @@
     package com.Px4.ChatAPI.controllers.JWT;
 
 
+    import com.Px4.ChatAPI.config.IgnoreRequest;
     import com.Px4.ChatAPI.config.ResponeMessage;
     import com.Px4.ChatAPI.services.AccountService;
     import com.Px4.ChatAPI.models.JWT.BlackListRepository;
