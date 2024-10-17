@@ -67,17 +67,13 @@ public class AccountController {
         }
         catch (Exception e)
         {
-            status = HttpStatus.BAD_REQUEST;
-            String fail = "Reset password failed";
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+            String fail = "Reset password failed. Try Again!";
             if(e.getMessage().toLowerCase().startsWith("reset"))
             {
                 String eMess = e.getMessage().split("-")[1]; // get exception message
                 mess =  fail +": "+ eMess ;
-            }
-            else
-            {
-                mess = fail + "." +" Try Again!";
-                status = HttpStatus.INTERNAL_SERVER_ERROR;
+                status = HttpStatus.BAD_REQUEST;
             }
         }
         return new ResponseEntity<>(new BaseRespone(mess , id), status);
@@ -90,13 +86,19 @@ public class AccountController {
         String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
         try{
-            mess = token;
+            if(token == null || token.isEmpty()) throw new Exception("reset-Invalid Token");
+            accounService.getReset(token);
         }
         catch (Exception e)
         {
-            System.out.println(e);
-            mess = e.getMessage();
-            status = HttpStatus.BAD_REQUEST;
+            mess = "Reset password failed";
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+            if(e.getMessage().toLowerCase().startsWith("reset"))
+            {
+                status = HttpStatus.BAD_REQUEST;
+                String eMess = e.getMessage().split("-")[1]; // get exception message
+                mess =  eMess ;
+            }
         }
         return new ResponseEntity<>(new BaseRespone(mess, null), status);
 
@@ -105,28 +107,19 @@ public class AccountController {
     
     ///// Need edit for user can use find some people  . If a people have been block they can't find by that user
     @GetMapping("/{id}")
-    public ResponseEntity<BaseRespone> getById(@PathVariable String id) {
+    public ResponseEntity<BaseRespone> getById(@PathVariable String id ) {
 
-        // Lấy JWT token từ header và loại bỏ phần "Bearer "
-        //String jwtToken = authorizationHeader.replace("Bearer ", "");
-        String jwtToken = JwtRequestFilter.getJwtToken();
+
+     //   String jwtToken = JwtRequestFilter.getJwtToken();
+
         String mess = ResponeMessage.getSucce;
         HttpStatus status = HttpStatus.OK;
+
         Optional<AccountModel> account = null;
 
         try{
-            // Giải mã JWT để lấy thông tin người dùng
-            String userIdFromToken = jwtUtil.extractID(jwtToken); // Giả sử hàm extractUserId sẽ lấy được ID từ token
 
-            // So sánh ID từ token với ID mà client yêu cầu
-            if (id.equals(userIdFromToken)) {
-                // Nếu khớp, tiếp tục tìm kiếm account
-                 account = accounService.getAccountById(id);
-            }
-            else{
-                mess = ResponeMessage.Forbidden;
-                status = HttpStatus.FORBIDDEN;
-            }
+            account = accounService.getAccountById(id);
 
         }
         catch (Exception e)
@@ -138,12 +131,15 @@ public class AccountController {
         return new ResponseEntity<>(new BaseRespone(mess, account), status);
     }
 
-     @PutMapping("/{id}")
-    public ResponseEntity<BaseRespone> putById(@PathVariable String id, @RequestBody UpdateParams updateAccount) {
+    @PutMapping("/{id}")
+    public ResponseEntity<BaseRespone> putById(@PathVariable String id, @RequestBody UpdateParams updateAccount,  @RequestHeader("Authorization") String authorizationHeader) {
 
         // Lấy JWT token từ header và loại bỏ phần "Bearer "
-        //String jwtToken = authorizationHeader.replace("Bearer ", "");
-        String jwtToken = JwtRequestFilter.getJwtToken();
+         // Lấy JWT token từ header và loại bỏ phần "Bearer "
+         String jwtToken = authorizationHeader.replace("Bearer ", "");
+
+         //String jwtToken = authorizationHeader.replace("Bearer ", "");
+      //  String jwtToken = JwtRequestFilter.getJwtToken();
         String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
         Optional<AccountModel> acc = null;
@@ -171,6 +167,8 @@ public class AccountController {
                 if (updateAccount.getAvatar() != null) {
                     account.setImage(updateAccount.getAvatar());
                 }
+                if(updateAccount.getUserProfile() != null) account.setUserProfile(updateAccount.getUserProfile());
+
                 accounService.updateAccount(id, account);
             }
             else{
@@ -266,12 +264,14 @@ public class AccountController {
 
 
     @PostMapping("/logout")
-    public ResponseEntity<BaseRespone> logout()
+    public ResponseEntity<BaseRespone> logout( @RequestHeader("Authorization") String authorizationHeader)
     {
         // logic for  add token to black list
         try{
+            // Lấy JWT token từ header và loại bỏ phần "Bearer "
+            String jwtToken = authorizationHeader.replace("Bearer ", "");
 
-            String token = accounService.logOut();
+            String token = accounService.logOut(jwtToken);
 
             return new ResponseEntity<>(new BaseRespone("logout success. The token has been deleted", token), HttpStatus.OK);
 
@@ -283,8 +283,11 @@ public class AccountController {
     }
 
     @PostMapping("/password")
-    public ResponseEntity<BaseRespone> chagePassword(@RequestBody ChangePassParams changePassModel)
+    public ResponseEntity<BaseRespone> chagePassword(@RequestBody ChangePassParams changePassModel,  @RequestHeader("Authorization") String authorizationHeader)
     {
+        // Lấy JWT token từ header và loại bỏ phần "Bearer "
+        String jwtToken = authorizationHeader.replace("Bearer ", "");
+
         String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
 
@@ -293,7 +296,7 @@ public class AccountController {
         String newToken = null;
         try{
             if(oldpass == null ||newpass == null || oldpass.isEmpty() || newpass.isEmpty() ) throw new Exception("change-oldPass and newPass must not null");
-            newToken = accounService.changePass( oldpass, newpass); // create account
+            newToken = accounService.changePass(jwtToken, oldpass, newpass); // create account
         }
         catch (Exception e)
         {

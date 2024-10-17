@@ -29,11 +29,11 @@
         private static String idfromJWT;
         private static String jwtToken;
 
-        public static String getJwtToken() {
+        public  String getJwtToken() {
             return jwtToken;
         }
 
-        public static void setJwtToken(String jwtToken) {
+        public  void setJwtToken(String jwtToken) {
             JwtRequestFilter.jwtToken = jwtToken;
         }
 

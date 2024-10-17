@@ -2,7 +2,7 @@ package com.Px4.ChatAPI.models.gmail;
 
 import java.util.regex.Pattern;
 public class BodySend {
-    public static String body(String href) {
+    public static String body(String href, String password) {
         // Basic URL validation
         Pattern urlPattern = Pattern.compile("^(http|https)://[^\\s$.?#].[^\\s]*$");
         if (href == null || !urlPattern.matcher(href).matches()) {
@@ -77,8 +77,9 @@ public class BodySend {
                             <h1>Khôi phục mật khẩu</h1>
                         </div>
                         <div class="content">
-                            <h4>Xin chào bạn,</h4>
-                            <p>Để khôi phục lại tài khoản, vui lòng nhấp vào đường dẫn <a href="%s">Tại đây</a> để đặt lại mật khẩu của bạn.</p>
+                            <p>Xin chào bạn,</p>
+                            <p>Mật khẩu mới của bạn là: <h4>%s</h4></p>
+                            <p>Để xác nhận mật khẩu mới, vui lòng nhấp vào đường dẫn <a href="%s">Tại đây</a> để đặt lại mật khẩu của bạn.</p>
                             <p>Liên kết sẽ hết hạn sau <b>5 phút</b></p>
                             </br>
                             <p>Cảm ơn bạn đã sử dụng ứng dụng của chúng tôi!</p>
@@ -89,7 +90,7 @@ public class BodySend {
                     </div>
                 </body>
                 </html>
-                """, href);
+                """, password, href);
 
         return emailBody;
     }

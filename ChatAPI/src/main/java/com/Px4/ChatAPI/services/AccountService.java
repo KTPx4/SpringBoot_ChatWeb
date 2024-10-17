@@ -1,6 +1,5 @@
 package com.Px4.ChatAPI.services;
 
-import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
 import com.Px4.ChatAPI.controllers.requestParams.account.RegisterParams;
 import com.Px4.ChatAPI.models.ConverDateTime;
@@ -58,12 +57,8 @@ public class AccountService {
         String id = "";
 
         while (accountRepository.existsById(id) || id.isEmpty()) {
-            StringBuilder tokenBuilder = new StringBuilder();
-            for (int i = 0; i < 12; i++) {
-                int index = RANDOM.nextInt(CHARACTERS.length());
-                tokenBuilder.append(CHARACTERS.charAt(index));
-            }
-            id = tokenBuilder.toString();
+
+            id = generateChar(10);
         }
 
         return id;
@@ -75,17 +70,23 @@ public class AccountService {
 
         // Tạo token mới nếu token hiện tại đã tồn tại trong resetRepository
         while (resetRepository.existsByToken(token) || token.isEmpty()) {
-            StringBuilder tokenBuilder = new StringBuilder();
-            for (int i = 0; i < 12; i++) {
-                int index = RANDOM.nextInt(CHARACTERS.length());
-                tokenBuilder.append(CHARACTERS.charAt(index));
-            }
-            token = tokenBuilder.toString();
+           token = generateChar(20);
         }
 
         return token;
     }
 
+    public String generateChar(int length)
+    {
+        String token = "";
+        StringBuilder tokenBuilder = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            int index = RANDOM.nextInt(CHARACTERS.length());
+            tokenBuilder.append(CHARACTERS.charAt(index));
+        }
+        token = tokenBuilder.toString();
+        return token;
+    }
 
     // Tạo mới tài khoản
     public AccountModel createAccount(RegisterParams registerAccount) throws Exception {
@@ -131,6 +132,7 @@ public class AccountService {
             account.setEmail(accountDetails.getEmail());
             account.setRole(accountDetails.getRole());
             account.setStatus(accountDetails.getStatus());
+            account.setUserProfile(accountDetails.getUserProfile());
 
             return accountRepository.save(account);
         } else {
@@ -143,28 +145,34 @@ public class AccountService {
         accountRepository.deleteById(id);
     }
 
-    public String logOut()
+    public String logOut(String token)
     {
-        String token = JwtRequestFilter.getJwtToken();
+
         BlackListModel blackListModel = BlackListModel.createWithCurrentTime(blackListRepository.count() + 1 ,token);
         blackListRepository.save( blackListModel);
         ConverDateTime.toHCMtime(blackListModel.getCreatedAt());
         return token;
     }
 
-    public String changePass( String password, String newPassword) throws Exception
+
+    public String changePass(String token, String password, String newPassword) throws Exception
     {
-        String idUser = JwtRequestFilter.getIdfromJWT();
+
+        // Lấy JWT token từ header và loại bỏ phần "Bearer "
+        String idUser = jwtUtil.extractID(token); // Giả sử hàm extractUserId sẽ lấy được ID từ token
+
+
         Optional<AccountModel> acc = accountRepository.findById(idUser);
 
         if(acc.isEmpty()) throw new Exception("change-User not found");
 
         if(!passwordEncoder.matches(password, acc.get().getPassword())) throw new Exception("change-Old Password incorrect");
+
         AccountModel accUpdate = acc.get();
         accUpdate.setPassword(passwordEncoder.encode(newPassword));
-
         updateAccount(idUser, accUpdate);
-        logOut();
+
+        logOut(token); // add curren jwt token to black list
         String newToken = jwtUtil.generateToken(idUser);
 
         return newToken;
@@ -179,8 +187,9 @@ public class AccountService {
         if(resetRepository.existsByUserId(id)) throw new Exception("reset-An email has been sent. Please check your inbox!");
 
         String token = generateToken();
+        String newPass = generateChar(7);
         String email = acc.get().getEmail();
-        ResetModel resetAcc = new ResetModel(id, token);
+        ResetModel resetAcc = new ResetModel(id, token, newPass);
 
         resetRepository.save(resetAcc);
 
@@ -188,7 +197,27 @@ public class AccountService {
 //        System.out.println("RUN OK:"+ href);
 
         sendMailService.submitContactRequest( email,"Khôi phục mật khẩu",
-                BodySend.body(href));
+                BodySend.body(href, newPass));
+
+        return true;
+    }
+    public boolean getReset(String token) throws Exception
+    {
+        Optional<ResetModel> resetModel = resetRepository.findByToken(token);
+        if(resetModel.isEmpty()) throw new Exception("reset-Token reset invalid or expired");
+        // Get Reset model
+        ResetModel reset = resetModel.get();
+        // Get id of user
+        String idUser = reset.getUserId();
+
+        //find user
+        Optional<AccountModel> acc = accountRepository.findById(idUser);
+        if(acc.isEmpty()) throw new Exception("reset-User not found");
+
+        // Update new Password
+        AccountModel accUpdate = acc.get();
+        accUpdate.setPassword(passwordEncoder.encode(reset.getNewPassword()));
+        updateAccount(idUser, accUpdate);
 
         return true;
     }
