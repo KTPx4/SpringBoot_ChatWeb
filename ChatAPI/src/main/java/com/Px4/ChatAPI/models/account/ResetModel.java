@@ -27,12 +27,17 @@ public class ResetModel {
     @Setter
     private Date createdAt;
 
+    @Getter
+    @Setter
+    private String newPassword;
+
     public static int TIME_LVIE = 60*5;
 
-    public ResetModel(String userId, String token) {
+    public ResetModel(String userId, String token, String newPassword) {
         this.userId = userId;
         this.token = token;
         createdAt = Date.from(Instant.now());
+        this.newPassword = newPassword;
     }
 
 

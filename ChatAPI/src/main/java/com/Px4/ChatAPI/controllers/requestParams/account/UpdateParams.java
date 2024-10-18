@@ -4,10 +4,20 @@ public class UpdateParams {
     private String name;
     private String avatar;
     private String email;
+    private String userProfile;
 
     public String getName() {
         return name;
     }
+
+    public String getUserProfile() {
+        return userProfile;
+    }
+
+    public void setUserProfile(String userProfile) {
+        this.userProfile = userProfile;
+    }
+
 
     public void setName(String name) {
         this.name = name;
