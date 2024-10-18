@@ -2,6 +2,7 @@ package com.Px4.ChatAPI.models.friend;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
@@ -9,6 +10,9 @@ import java.util.Date;
 
 @Document(collection = "friends")
 public class FriendModel{
+    @Id
+    private String id;
+
     @Setter
     @Getter
     private String accountID;
@@ -33,6 +37,9 @@ public class FriendModel{
     @Getter
     private String Type; // non - waiting response - response waiting
 
+    public static String typeNon = "non";
+    public static String typeWaiting = "waiting";
+    public static String typeResponse = "response";
 
     public FriendModel(String accountID, String friendID) {
         this.accountID = accountID;
