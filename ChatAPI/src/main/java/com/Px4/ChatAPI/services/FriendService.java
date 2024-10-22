@@ -2,6 +2,7 @@ package com.Px4.ChatAPI.services;
 
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
+import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.account.AccountRepository;
 import com.Px4.ChatAPI.models.friend.FriendDetail;
 import com.Px4.ChatAPI.models.friend.FriendModel;
@@ -23,21 +24,56 @@ public class FriendService {
     @Autowired
     private AccountRepository accountRepository;
 
+    @Autowired
+    private JwtRequestFilter jwtRequestFilter;
+
     String typeNon = FriendModel.typeNon;
     String typeWait = FriendModel.typeWaiting;
     String typeResponse = FriendModel.typeResponse;
+    String statusBlocked = FriendModel.statusBlocked;
+    String statusBlockedBy = FriendModel.statusBlockedBy;
+    String statusNormal = FriendModel.statusNormal;
 
-    public List<FriendDetail> getAllFriends()
+
+    public List<FriendDetail> getAllFriends() throws Exception
     {
-        String id = JwtRequestFilter.getIdfromJWT();
+        String id = jwtRequestFilter.getIdfromJWT();
+        List<FriendDetail> list = new ArrayList<>();
         List<FriendModel> friendList = friendRepository.findAllByAccountID(id);
-        System.out.println( "Count: "+ friendList.stream().count());
-        return null;
+
+        friendList.forEach(friend->{
+            FriendDetail friendDetail = getById(friend.getFriendID());
+
+            if(friendDetail != null) list.add(friendDetail);
+
+        });
+        return list;
     }
-    public FriendModel getById(String id) throws Exception
+    public FriendDetail getById(String idFriend)
     {
-        return null;
-        // Optional<FriendModel> friend = friendRepository.fi(id);
+        String id = jwtRequestFilter.getIdfromJWT();
+        FriendDetail friendDetail = null;
+        Optional<FriendModel> friend = friendRepository.findByAccountIDAndFriendID(id, idFriend);
+
+        if(friend.isPresent())
+        {
+            FriendModel friendModel = friend.get();
+            Optional<AccountModel> acc = accountRepository.findById(friendModel.getFriendID());
+
+            if(acc.isPresent())
+            {
+                AccountModel account = acc.get();
+                friendDetail = new FriendDetail(
+                        account.getId(), account.getName(),
+                        account.getUserProfile(), account.getImage(),
+                        friendModel.getStatus(), friendModel.getCreatedAt(),
+                        friendModel.getType(),
+                        friendModel.getIsFriend());
+            }
+
+        }
+
+        return friendDetail;
     }
 
     private void checkUser(String user1, String user2) throws Exception
@@ -64,7 +100,6 @@ public class FriendService {
         user2Friend.setIsFriend(isFriend);
 
 
-
         friendRepository.save(user1Friend);
         friendRepository.save(user2Friend);
     }
@@ -82,7 +117,32 @@ public class FriendService {
         friendRepository.save(user1Friend);
         friendRepository.save(user2Friend);
     }
+    private void Blocked(String user1, String user2) throws Exception
+    {
+        List<FriendModel> friendList = GetRelationShip(user1, user2);
+        FriendModel user1Friend = friendList.get(0);
+        user1Friend.setStatus(statusBlocked);
+        user1Friend.setType(typeNon);
 
+        FriendModel user2Friend = friendList.get(1);
+        user2Friend.setStatus(statusBlockedBy);
+        user2Friend.setType(typeNon);
+
+        friendRepository.save(user1Friend);
+        friendRepository.save(user2Friend);
+    }
+    private void unBlocked(String user1, String user2) throws Exception
+    {
+        List<FriendModel> friendList = GetRelationShip(user1, user2);
+        FriendModel user1Friend = friendList.get(0);
+        user1Friend.setStatus(statusNormal);
+
+        FriendModel user2Friend = friendList.get(1);
+        user2Friend.setStatus(statusNormal);
+
+        friendRepository.save(user1Friend);
+        friendRepository.save(user2Friend);
+    }
 
     private List<FriendModel> GetRelationShip(String user1, String user2) throws Exception
     {
@@ -118,17 +178,21 @@ public class FriendService {
     public boolean addFriend(String friendID) throws Exception
     {
 
-        String idUser = JwtRequestFilter.getIdfromJWT();
+        String idUser = jwtRequestFilter.getIdfromJWT();
 
         List<FriendModel> listRelation = GetRelationShip(idUser, friendID); // Get relationship with friendid / user 2
 
         FriendModel Friend = listRelation.getFirst(); // friend model of idUser: 0 - friend model of friendID: 1
 
         String type = Friend.getType().toLowerCase();
+        String status = Friend.getStatus().toLowerCase();
+System.out .println("Status:" + status);
+        if(status.equals(statusBlockedBy.toLowerCase())) throw new Exception("friend-You has been blocked can't action");
+        else if(status.equals(statusBlocked.toLowerCase())) throw new Exception("friend-You has been Blocked this user");
 
         if(type.equals(typeNon) && !Friend.getIsFriend())
         {
-            setAction(idUser, friendID);
+            setAction(idUser, friendID); // action is idUser send make friend, firendID response request
         }
         else if(type.equals(typeResponse)) //  response accept make friend
         {
@@ -138,6 +202,34 @@ public class FriendService {
         {
             throw new Exception("friend-Request has been sent or now is friend. Please wait!");
         }
+        return true;
+    }
+
+    public boolean unFriend(String friendID) throws Exception
+    {
+        String idUser = jwtRequestFilter.getIdfromJWT();
+        List<FriendModel> listRelation = GetRelationShip(idUser, friendID); // Get relationship with friendid / user 2
+
+        FriendModel Friend = listRelation.getFirst(); // friend model of idUser: 0 - friend model of friendID: 1
+        if(!Friend.getIsFriend()) throw new Exception("friend-Now has been unfriend");
+        setFriend(idUser, friendID, false);
+        return true;
+    }
+
+    public boolean actionStatus(String friendID) throws Exception
+    {
+        String idUser = jwtRequestFilter.getIdfromJWT();
+        List<FriendModel> listRelation = GetRelationShip(idUser, friendID); // Get relationship with friendid / user 2
+
+        FriendModel Friend = listRelation.getFirst(); // friend model of idUser: 0 - friend model of friendID: 1
+        if(Friend.getStatus().toLowerCase().equals(statusBlocked))
+        {
+            unBlocked(idUser, friendID);
+        }
+        else if(Friend.getStatus().toLowerCase().equals(statusNormal)){
+            Blocked(idUser, friendID);
+        }
+        else throw new Exception("friend-You have been blocked by this user");
         return true;
     }
 }
