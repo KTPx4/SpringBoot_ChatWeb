@@ -11,6 +11,8 @@
     import jakarta.servlet.ServletException;
     import jakarta.servlet.http.HttpServletRequest;
     import jakarta.servlet.http.HttpServletResponse;
+    import lombok.Getter;
+    import lombok.Setter;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.springframework.http.HttpStatus;
     import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,24 +28,12 @@
 
     @Component
     public  class JwtRequestFilter extends OncePerRequestFilter {
-        private static String idfromJWT;
-        private static String jwtToken;
-
-        public  String getJwtToken() {
-            return jwtToken;
-        }
-
-        public  void setJwtToken(String jwtToken) {
-            JwtRequestFilter.jwtToken = jwtToken;
-        }
-
-        public static String getIdfromJWT() {
-            return idfromJWT;
-        }
-
-        public static void setIdfromJWT(String idfromJWT) {
-            JwtRequestFilter.idfromJWT = idfromJWT;
-        }
+        @Setter
+        @Getter
+        private  String idfromJWT;
+        @Setter
+        @Getter
+        private  String jwtToken;
 
         @Autowired
         private UserDetailsService userDetailsService;

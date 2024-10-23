@@ -40,7 +40,9 @@ public class FriendModel{
     public static String typeNon = "non";
     public static String typeWaiting = "waiting";
     public static String typeResponse = "response";
-
+    public static String statusBlocked = "blocked";
+    public static String statusBlockedBy = "blockedby";
+    public static String statusNormal = "normal";
     public FriendModel(String accountID, String friendID) {
         this.accountID = accountID;
         this.friendID = friendID;

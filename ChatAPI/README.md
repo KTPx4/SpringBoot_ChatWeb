@@ -96,4 +96,40 @@
         "avatar": "/",
         "userProfile": "KTPx4"
       }
-      ```  
+      ```
+
+### Friend
+- **Get list friend**
+  - Get list friend of user
+  - **Endpoint:** `GET /api/v1/friend`
+  - **Header:** `Authorization`
+  - **Response**: message, data
+
+
+- **Get friend by id**
+  - Get infor of friend by id
+  - **Endpoint** `GET /api/v1/friend/{id}`
+  - **Header**: `Authorization`
+  - **Responese:** Details of friend
+
+
+- **Make friend**
+  - Send request make friend - response make friend. The server auto handle auto for send make friend or request make friend (Unfriend -> send make friend or wait request make friend -> acept make friend)
+  - **Endpoint** `POST /api/v1/friend/{id}`
+  - **Header**: `Authorization`
+  - **Responese:** Send request make friend or Response make friend from id
+
+
+- **Unfriend**
+  - Unfriend with id user
+  - **Endpoint** `POST /api/v1/friend/unfriend/{id}`
+  - **Header**: `Authorization`
+  - **Responese:** Unfriend with id
+  
+
+- **Set status**
+  - Set blocked or unblocked with user has id. The server auto hadle for blocked or unblocked when send request (Blocked -> Unblocked or Unblocked -> Blocked)
+  - **Endpoint** `POST /api/v1/friend/status/{id}`
+  - **Header**: `Authorization`
+  - **Responese:** Blocked / Unblocked user id
+  
