@@ -40,8 +40,8 @@ public class JwtUtil {
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) throws Exception{
-        final String username = extractID(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        final String id = extractID(token);
+        return (id.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
 

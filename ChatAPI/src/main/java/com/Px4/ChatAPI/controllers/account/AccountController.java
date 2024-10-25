@@ -2,11 +2,9 @@ package com.Px4.ChatAPI.controllers.account;
 
 
 import com.Px4.ChatAPI.config.ResponeMessage;
-import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
 import com.Px4.ChatAPI.controllers.requestParams.account.*;
-import com.Px4.ChatAPI.models.BaseRespone;
-import com.Px4.ChatAPI.models.ConverDateTime;
+import com.Px4.ChatAPI.models.Px4Response;
 import com.Px4.ChatAPI.models.account.*;
 import com.Px4.ChatAPI.services.AccountService;
 import com.Px4.ChatAPI.services.gmail.SendMailService;
@@ -19,7 +17,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -55,7 +52,7 @@ public class AccountController {
 
     
     @PostMapping("/reset") // For reset Password
-    public ResponseEntity<BaseRespone> sendReset(@RequestBody ResetParams resetParams)
+    public ResponseEntity<Px4Response> sendReset(@RequestBody ResetParams resetParams)
     {
         String id = resetParams.getId();
       //  System.out.println(id);
@@ -76,12 +73,12 @@ public class AccountController {
                 status = HttpStatus.BAD_REQUEST;
             }
         }
-        return new ResponseEntity<>(new BaseRespone(mess , id), status);
+        return new ResponseEntity<>(new Px4Response(mess , id), status);
 
     }
 
     @GetMapping("/reset") // For reset Password
-    public ResponseEntity<BaseRespone> resetPass(@RequestParam(value = "token", defaultValue = "") String token)
+    public ResponseEntity<Px4Response> resetPass(@RequestParam(value = "token", defaultValue = "") String token)
     {
         String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
@@ -100,17 +97,149 @@ public class AccountController {
                 mess =  eMess ;
             }
         }
-        return new ResponseEntity<>(new BaseRespone(mess, null), status);
+        return new ResponseEntity<>(new Px4Response(mess, null), status);
 
     }
     
-    
+
+    @PostMapping("/register")
+    public ResponseEntity<Px4Response> addAccount(@RequestBody RegisterParams registerAccount)
+    {
+
+        String mess = ResponeMessage.createSuccess;
+        HttpStatus status = HttpStatus.CREATED;
+
+        try{
+
+            String messs = "";
+            if (registerAccount.getUsername() == null || registerAccount.getUsername().isEmpty())  messs = ResponeMessage.userRequire;
+            else if (registerAccount.getPassword() == null || registerAccount.getPassword().isEmpty()) messs =  ResponeMessage.passRequire;
+            else if (registerAccount.getEmail() == null || registerAccount.getEmail().isEmpty()) messs = ResponeMessage.emailRequire;
+            else if(!isValidEmail(registerAccount.getEmail())) messs = ResponeMessage.invalidEmail;
+
+            if(!messs.isEmpty()) throw new Exception("create-" + messs);
+
+            accounService.createAccount(registerAccount); // create account
+
+        }
+        catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+            status = HttpStatus.BAD_REQUEST;
+
+            if(e.getMessage().toLowerCase().startsWith("create"))
+            {
+                String eMess = e.getMessage().split("-")[1]; // get exception message
+                mess = "Create Failed: " + eMess ;
+            }
+            else if(e.getMessage().startsWith("null"))
+            {
+                mess = "Create Failed: " + e.getMessage() ;
+            }
+            else
+            {
+                mess = "Create Failed. Try Again!";
+                status = HttpStatus.INTERNAL_SERVER_ERROR;
+            }
+        }
+
+        return new ResponseEntity<>(new Px4Response(mess, registerAccount), status );
+
+    }
+
+    // Đăng nhập: nhận username và password, trả về JWT nếu thông tin đúng
+    @PostMapping("/login")
+    public ResponseEntity<Px4Response> login(@RequestBody LoginParams authRequest) throws Exception {
+        Map<String, String> res = new HashMap<>();
+        try {
+
+            AccountModel account = accounService.getAccountByUsername(authRequest.getUsername())
+                    .orElseThrow(() -> new Exception(ResponeMessage.incorrectLogin));
+
+            // Kiểm tra mật khẩu
+            if (!passwordEncoder.matches(authRequest.getPassword(), account.getPassword())) {
+                throw new Exception(ResponeMessage.incorrectLogin);
+            }
+
+            // Tạo JWT sau khi xác thực thành công
+
+            String jwt = jwtUtil.generateToken(account.getId());
+
+            return new ResponseEntity<>(new Px4Response(ResponeMessage.loginSuccess, jwt), HttpStatus.OK );
+
+        }
+        catch (Exception e)
+        {
+
+            res.put("message", e.getMessage());
+            return new ResponseEntity<>(new Px4Response(e.getMessage(), null), HttpStatus.UNAUTHORIZED );
+
+        }
+    }
+
+
+    @PostMapping("/logout")
+    public ResponseEntity<Px4Response> logout(@RequestHeader("Authorization") String authorizationHeader)
+    {
+        // logic for  add token to black list
+        try{
+            // Lấy JWT token từ header và loại bỏ phần "Bearer "
+            String jwtToken = authorizationHeader.replace("Bearer ", "");
+
+            String token = accounService.logOut(jwtToken);
+
+            return new ResponseEntity<>(new Px4Response("logout success. The token has been deleted", token), HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(new Px4Response("Error!. Try again", null), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("/password")
+    public ResponseEntity<Px4Response> chagePassword(@RequestBody ChangePassParams changePassModel, @RequestHeader("Authorization") String authorizationHeader)
+    {
+        // Lấy JWT token từ header và loại bỏ phần "Bearer "
+        String jwtToken = authorizationHeader.replace("Bearer ", "");
+
+        String mess = ResponeMessage.updateSuccess;
+        HttpStatus status = HttpStatus.OK;
+
+        String oldpass = changePassModel.getOldPass();
+        String newpass = changePassModel.getNewPass();
+        String newToken = null;
+        try{
+            if(oldpass == null ||newpass == null || oldpass.isEmpty() || newpass.isEmpty() ) throw new Exception("change-oldPass and newPass must not null");
+            newToken = accounService.changePass(jwtToken, oldpass, newpass); // create account
+        }
+        catch (Exception e)
+        {
+            // System.out.println(e.getMessage());
+            status = HttpStatus.BAD_REQUEST;
+            String fail = "Change password failed";
+            if(e.getMessage().toLowerCase().startsWith("change"))
+            {
+                String eMess = e.getMessage().split("-")[1]; // get exception message
+                mess =  fail +": "+ eMess ;
+            }
+            else
+            {
+                mess = fail + "." +" Try Again!";
+                status = HttpStatus.INTERNAL_SERVER_ERROR;
+            }
+        }
+
+        return new ResponseEntity<>(new Px4Response(mess, newToken), status );
+    }
+
+
     ///// Need edit for user can use find some people  . If a people have been block they can't find by that user
     @GetMapping("/{id}")
-    public ResponseEntity<BaseRespone> getById(@PathVariable String id ) {
+    public ResponseEntity<Px4Response> getById(@PathVariable String id ) {
 
 
-     //   String jwtToken = JwtRequestFilter.getJwtToken();
+        //   String jwtToken = JwtRequestFilter.getJwtToken();
 
         String mess = ResponeMessage.getSucce;
         HttpStatus status = HttpStatus.OK;
@@ -128,18 +257,18 @@ public class AccountController {
             status = HttpStatus.UNAUTHORIZED;
         }
 
-        return new ResponseEntity<>(new BaseRespone(mess, account), status);
+        return new ResponseEntity<>(new Px4Response(mess, account), status);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BaseRespone> putById(@PathVariable String id, @RequestBody UpdateParams updateAccount,  @RequestHeader("Authorization") String authorizationHeader) {
+    public ResponseEntity<Px4Response> putById(@PathVariable String id, @RequestBody UpdateParams updateAccount, @RequestHeader("Authorization") String authorizationHeader) {
 
         // Lấy JWT token từ header và loại bỏ phần "Bearer "
-         // Lấy JWT token từ header và loại bỏ phần "Bearer "
-         String jwtToken = authorizationHeader.replace("Bearer ", "");
+        // Lấy JWT token từ header và loại bỏ phần "Bearer "
+        String jwtToken = authorizationHeader.replace("Bearer ", "");
 
-         //String jwtToken = authorizationHeader.replace("Bearer ", "");
-      //  String jwtToken = JwtRequestFilter.getJwtToken();
+        //String jwtToken = authorizationHeader.replace("Bearer ", "");
+        //  String jwtToken = JwtRequestFilter.getJwtToken();
         String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
         Optional<AccountModel> acc = null;
@@ -183,139 +312,7 @@ public class AccountController {
             status = HttpStatus.UNAUTHORIZED;
         }
 
-        return new ResponseEntity<>(new BaseRespone(mess, updateAccount), status);
-    }
-
-
-    @PostMapping("/register")
-    public ResponseEntity<BaseRespone> addAccount(@RequestBody RegisterParams registerAccount)
-    {
-
-        String mess = ResponeMessage.createSuccess;
-        HttpStatus status = HttpStatus.CREATED;
-
-        try{
-
-            String messs = "";
-            if (registerAccount.getUsername() == null || registerAccount.getUsername().isEmpty())  messs = ResponeMessage.userRequire;
-            else if (registerAccount.getPassword() == null || registerAccount.getPassword().isEmpty()) messs =  ResponeMessage.passRequire;
-            else if (registerAccount.getEmail() == null || registerAccount.getEmail().isEmpty()) messs = ResponeMessage.emailRequire;
-            else if(!isValidEmail(registerAccount.getEmail())) messs = ResponeMessage.invalidEmail;
-
-            if(!messs.isEmpty()) throw new Exception("create-" + messs);
-
-            accounService.createAccount(registerAccount); // create account
-
-        }
-        catch (Exception e)
-        {
-            System.out.println(e.getMessage());
-            status = HttpStatus.BAD_REQUEST;
-
-            if(e.getMessage().toLowerCase().startsWith("create"))
-            {
-                String eMess = e.getMessage().split("-")[1]; // get exception message
-                mess = "Create Failed: " + eMess ;
-            }
-            else if(e.getMessage().startsWith("null"))
-            {
-                mess = "Create Failed: " + e.getMessage() ;
-            }
-            else
-            {
-                mess = "Create Failed. Try Again!";
-                status = HttpStatus.INTERNAL_SERVER_ERROR;
-            }
-        }
-
-        return new ResponseEntity<>(new BaseRespone(mess, registerAccount), status );
-
-    }
-
-    // Đăng nhập: nhận username và password, trả về JWT nếu thông tin đúng
-    @PostMapping("/login")
-    public ResponseEntity<BaseRespone> login(@RequestBody LoginParams authRequest) throws Exception {
-        Map<String, String> res = new HashMap<>();
-        try {
-
-            AccountModel account = accounService.getAccountByUsername(authRequest.getUsername())
-                    .orElseThrow(() -> new Exception(ResponeMessage.incorrectLogin));
-
-            // Kiểm tra mật khẩu
-            if (!passwordEncoder.matches(authRequest.getPassword(), account.getPassword())) {
-                throw new Exception(ResponeMessage.incorrectLogin);
-            }
-
-            // Tạo JWT sau khi xác thực thành công
-
-            String jwt = jwtUtil.generateToken(account.getId());
-
-            return new ResponseEntity<>(new BaseRespone(ResponeMessage.loginSuccess, jwt), HttpStatus.OK );
-
-        }
-        catch (Exception e)
-        {
-
-            res.put("message", e.getMessage());
-            return new ResponseEntity<>(new BaseRespone(e.getMessage(), null), HttpStatus.UNAUTHORIZED );
-
-        }
-    }
-
-
-    @PostMapping("/logout")
-    public ResponseEntity<BaseRespone> logout( @RequestHeader("Authorization") String authorizationHeader)
-    {
-        // logic for  add token to black list
-        try{
-            // Lấy JWT token từ header và loại bỏ phần "Bearer "
-            String jwtToken = authorizationHeader.replace("Bearer ", "");
-
-            String token = accounService.logOut(jwtToken);
-
-            return new ResponseEntity<>(new BaseRespone("logout success. The token has been deleted", token), HttpStatus.OK);
-
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return new ResponseEntity<>(new BaseRespone("Error!. Try again", null), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-    }
-
-    @PostMapping("/password")
-    public ResponseEntity<BaseRespone> chagePassword(@RequestBody ChangePassParams changePassModel,  @RequestHeader("Authorization") String authorizationHeader)
-    {
-        // Lấy JWT token từ header và loại bỏ phần "Bearer "
-        String jwtToken = authorizationHeader.replace("Bearer ", "");
-
-        String mess = ResponeMessage.updateSuccess;
-        HttpStatus status = HttpStatus.OK;
-
-        String oldpass = changePassModel.getOldPass();
-        String newpass = changePassModel.getNewPass();
-        String newToken = null;
-        try{
-            if(oldpass == null ||newpass == null || oldpass.isEmpty() || newpass.isEmpty() ) throw new Exception("change-oldPass and newPass must not null");
-            newToken = accounService.changePass(jwtToken, oldpass, newpass); // create account
-        }
-        catch (Exception e)
-        {
-            // System.out.println(e.getMessage());
-            status = HttpStatus.BAD_REQUEST;
-            String fail = "Change password failed";
-            if(e.getMessage().toLowerCase().startsWith("change"))
-            {
-                String eMess = e.getMessage().split("-")[1]; // get exception message
-                mess =  fail +": "+ eMess ;
-            }
-            else
-            {
-                mess = fail + "." +" Try Again!";
-                status = HttpStatus.INTERNAL_SERVER_ERROR;
-            }
-        }
-
-        return new ResponseEntity<>(new BaseRespone(mess, newToken), status );
+        return new ResponseEntity<>(new Px4Response(mess, updateAccount), status);
     }
 
 

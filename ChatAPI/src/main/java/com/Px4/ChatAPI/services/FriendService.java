@@ -2,6 +2,7 @@ package com.Px4.ChatAPI.services;
 
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
+import com.Px4.ChatAPI.models.ConverDateTime;
 import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.account.AccountRepository;
 import com.Px4.ChatAPI.models.friend.FriendDetail;
@@ -66,7 +67,7 @@ public class FriendService {
                 friendDetail = new FriendDetail(
                         account.getId(), account.getName(),
                         account.getUserProfile(), account.getImage(),
-                        friendModel.getStatus(), friendModel.getCreatedAt(),
+                        friendModel.getStatus(), ConverDateTime.toHCMtime(friendModel.getCreatedAt()),
                         friendModel.getType(),
                         friendModel.getIsFriend());
             }
@@ -215,7 +216,19 @@ System.out .println("Status:" + status);
         setFriend(idUser, friendID, false);
         return true;
     }
-
+    public boolean isFriend(String friendID)
+    {
+        try{
+            String idUser = jwtRequestFilter.getIdfromJWT();
+            List<FriendModel> listRelation = GetRelationShip(idUser, friendID);
+            FriendModel Friend = listRelation.getFirst(); // friend model of idUser: 0 - friend model of friendID: 1
+            return Friend.getIsFriend();
+        }
+        catch (Exception e)
+        {
+            return false;
+        }
+    }
     public boolean actionStatus(String friendID) throws Exception
     {
         String idUser = jwtRequestFilter.getIdfromJWT();

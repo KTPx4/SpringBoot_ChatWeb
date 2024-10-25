@@ -1,10 +1,10 @@
 package com.Px4.ChatAPI.models;
 
-public class BaseRespone<T> {
+public class Px4Response<T> {
     String message;
     private T data;
 
-    public BaseRespone(String message, T data) {
+    public Px4Response(String message, T data) {
         this.message = message;
         this.data = data;
     }
