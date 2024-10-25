@@ -9,14 +9,14 @@ public class FriendDetail {
     private String image;
 
     private String status;
-    private Date createdAt;
+    private String createdAt;
     private String type;
     private boolean isFriend;
 
     public FriendDetail() {
     }
 
-    public FriendDetail(String id, String name, String userProfile, String image, String status, Date createdAt, String type, boolean isFriend) {
+    public FriendDetail(String id, String name, String userProfile, String image, String status, String createdAt, String type, boolean isFriend) {
         this.id = id;
         this.name = name;
         this.userProfile = userProfile;
@@ -83,11 +83,11 @@ public class FriendDetail {
         this.status = status;
     }
 
-    public Date getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Date createdAt) {
+    public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
 }

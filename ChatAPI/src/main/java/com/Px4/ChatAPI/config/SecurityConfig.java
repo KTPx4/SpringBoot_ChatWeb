@@ -11,6 +11,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -22,7 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
-public class SecurityConfig {
+public class SecurityConfig   {
 
     // private final TestAccount testAccount = new TestAccount();
     private final AccountRepository accountRepository;
@@ -38,12 +39,12 @@ public class SecurityConfig {
     // Bean cho UserDetailsService để Spring sử dụng
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        return (username) -> {
-            AccountModel account = accountRepository.findByUsername(username)
+        return (id) -> {
+            AccountModel account = accountRepository.findById(id)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found!"));
 
             return User.builder()
-                    .username(account.getUsername())
+                    .username(account.getId())
                     .password(passwordEncoder.encode(account.getPassword()))
                     .roles(account.getRole())
                     .build();
@@ -70,13 +71,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtRequestFilter jwtRequestFilter) throws Exception {
         http
 
-                .csrf(s->s.disable())
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth ->
-//                        auth
-//                        .requestMatchers("/api/v1/account/login").permitAll()
-//                        .requestMatchers("/api/v1/account/register").permitAll()
-//                        .requestMatchers("/ws/**").permitAll()
-//                        .anyRequest().authenticated()
                     {
                         try{
                             IgnoreRequest.getIgnoreList().forEach(ignore -> auth.requestMatchers(ignore).permitAll());

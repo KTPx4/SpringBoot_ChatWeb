@@ -1,9 +1,8 @@
 package com.Px4.ChatAPI.controllers.friend;
 
 import com.Px4.ChatAPI.config.ResponeMessage;
-import com.Px4.ChatAPI.models.BaseRespone;
+import com.Px4.ChatAPI.models.Px4Response;
 import com.Px4.ChatAPI.models.friend.FriendDetail;
-import com.Px4.ChatAPI.models.friend.FriendModel;
 import com.Px4.ChatAPI.services.FriendService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,8 +18,8 @@ public class FriendController {
     private FriendService friendService;
 
     @GetMapping() // get list friend
-    public ResponseEntity<BaseRespone> getFriendList(){
-        String mess = ResponeMessage.makeFriendRequest;
+    public ResponseEntity<Px4Response> getFriendList(){
+        String mess = ResponeMessage.getSucce;
         HttpStatus status = HttpStatus.OK;
         List<FriendDetail> listFriend = null;
         try{
@@ -39,11 +38,11 @@ public class FriendController {
             }
         }
         // handle for send make friend - accept make fiend  + set isFriend = true
-        return new ResponseEntity<>(new BaseRespone<>(mess, listFriend), status);
+        return new ResponseEntity<>(new Px4Response<>(mess, listFriend), status);
     }
 
     @PostMapping("/unfriend/{id}") // unfriend
-    public ResponseEntity<BaseRespone> unFriend(@PathVariable String id)
+    public ResponseEntity<Px4Response> unFriend(@PathVariable String id)
     {
         String mess = ResponeMessage.makeFriendRequest;
         HttpStatus status = HttpStatus.OK;
@@ -64,11 +63,11 @@ public class FriendController {
             }
         }
         // handle for send make friend - accept make fiend  + set isFriend = true
-        return new ResponseEntity<>(new BaseRespone<>(mess, null), status);
+        return new ResponseEntity<>(new Px4Response<>(mess, null), status);
     }
 
     @PostMapping("/status/{id}")  // block - unblock this user
-    public ResponseEntity<BaseRespone> actionStatus(@PathVariable String id)
+    public ResponseEntity<Px4Response> actionStatus(@PathVariable String id)
     {
 
         String mess = ResponeMessage.makeFriendRequest;
@@ -89,15 +88,15 @@ public class FriendController {
             }
         }
         // handle for send make friend - accept make fiend  + set isFriend = true
-        return new ResponseEntity<>(new BaseRespone<>(mess, null), status);
+        return new ResponseEntity<>(new Px4Response<>(mess, null), status);
     }
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<BaseRespone> getById(@PathVariable String id)
+    public ResponseEntity<Px4Response> getById(@PathVariable String id)
     {
         // get info this user
-        String mess = ResponeMessage.makeFriendRequest;
+        String mess = ResponeMessage.getSucce;
         HttpStatus status = HttpStatus.OK;
         FriendDetail friend = null;
         try{
@@ -116,11 +115,11 @@ public class FriendController {
             }
         }
         // handle for send make friend - accept make fiend  + set isFriend = true
-        return new ResponseEntity<>(new BaseRespone<>(mess, friend), status);
+        return new ResponseEntity<>(new Px4Response<>(mess, friend), status);
     }
 
     @PostMapping("/{id}") // make friend - send request and response
-    public ResponseEntity<BaseRespone> actionFriend(@PathVariable String id)
+    public ResponseEntity<Px4Response> actionFriend(@PathVariable String id)
     {
         String mess = ResponeMessage.makeFriendRequest;
         HttpStatus status = HttpStatus.OK;
@@ -141,7 +140,7 @@ public class FriendController {
             }
         }
         // handle for send make friend - accept make fiend  + set isFriend = true
-        return new ResponseEntity<>(new BaseRespone<>(mess, null), status);
+        return new ResponseEntity<>(new Px4Response<>(mess, null), status);
     }
 
 

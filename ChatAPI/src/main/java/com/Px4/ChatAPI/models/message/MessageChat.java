@@ -38,4 +38,13 @@ public class MessageChat {
         this.content = content;
         this.sender = sender;
     }
+
+    @Override
+    public String toString() {
+        return "MessageChat{" +
+                "type='" + type + '\'' +
+                ", content='" + content + '\'' +
+                ", sender='" + sender + '\'' +
+                '}';
+    }
 }

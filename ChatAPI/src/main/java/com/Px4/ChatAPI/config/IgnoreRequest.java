@@ -8,6 +8,7 @@ import java.util.List;
 public class IgnoreRequest {
     @Getter
     private static List<String> ignoreList = Arrays.asList(
+            "/ws",
             "/ws/**",
             "/api/v1/account/login",
             "/api/v1/account/register",
