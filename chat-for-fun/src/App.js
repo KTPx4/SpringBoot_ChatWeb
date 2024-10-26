@@ -1,81 +1,81 @@
-import logo from './logo.svg';
 import './App.css';
 import React, { useEffect, useState } from 'react';
 import { Stomp } from '@stomp/stompjs';
 
-
 function App() {
     const [message, setMessage] = useState('');
     const [receivedMessages, setReceivedMessages] = useState([]);
-    const [socket, setSocket] = useState(null);
     const [username, setUsername] = useState('');
-    const [ID, setID] = useState('');
     const [stompClient, setStomClient] = useState(null);
-    useEffect(() => {       
-    }, []);
+
+    useEffect(() => {
+        if (stompClient) {
+            // Kết nối sau khi stompClient được khởi tạo
+            stompClient.connect(
+                { Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBZmlRNzI0MVdqIiwiaWF0IjoxNzI5ODY3MTc3LCJleHAiOjE3MzA0NzE5Nzd9.fIFE0-UxZX0xGbSVG5VKxaexfyPrdSHtbpRHY0i7zcs` }, // JWT
+                (frame) => {
+                    console.log('Đã kết nối đến WebSocket server: ' + frame);
+                    
+                    // Đăng ký một endpoint với client
+                    stompClient.subscribe('/topic/messages', (message) => {
+                        const msg = JSON.parse(message.body);
+                        console.log('Nhận tin nhắn từ server: ', msg.content);
+                        setReceivedMessages((prevMessages) => [...prevMessages, msg.content]);
+                    });
+
+                    stompClient.subscribe('/list/online', (message) => {
+                        console.log("List online: ", message)
+
+                        const msg = JSON.parse(message.body);
+                        console.log('Nhận tin nhắn từ server: ', msg.content);
+
+                    });
+
+                    const connectMessage = {
+                        type: 'connect',
+                        content: 'User đã tham gia',
+                        sender: username,
+                    };
+                    stompClient.send('/app/chat', {}, JSON.stringify(connectMessage));
+                },
+                (error) => {
+                    console.log(error);
+                    console.error('Connection error: ' + error);
+                }
+            );
+
+        }
+    }, [stompClient, username]); // Kết nối khi stompClient và username đã được thiết lập
+
+    const connectToWebSocket = () => {
+        const ws = new WebSocket('ws://localhost:8080/ws');
+        const client = Stomp.over(ws);
+        setStomClient(client); // Thiết lập stompClient
+        ws.onclose = (event) => {
+            console.log(event)
+            if (event.wasClean) {
+                console.log('Connection closed cleanly');
+            } else {
+                console.log('Connection error:', event.reason || 'Unknown reason');
+            }
+        };
+    };
 
     // Hàm gửi tin nhắn đến WebSocket server
     const sendMessage = () => {
-
-    //   if (socket && socket.readyState === WebSocket.OPEN && message) 
-      if (stompClient && stompClient.readyState === WebSocket.OPEN && message) 
-
-        {
-        // const messageObject = {
-        //     type: 'chat', // Loại tin nhắn
-        //     content: message,
-        //     sender: username // Tên người dùng, có thể thay đổi thành một giá trị động
-        // };
-        // socket.send(JSON.stringify(messageObject));
-        const Mess = {
-            type: 'chat',
-            content: message,
-            sender: username, // Sử dụng tên người dùng
-        };
-        stompClient.send('/app/chat', {}, JSON.stringify(Mess));
-        setMessage('');
-     }
+        if (stompClient && stompClient.connected && message) {
+            const Mess = {
+                type: 'chat',
+                content: message,
+                sender: username,
+            };
+            stompClient.send('/app/chat', {}, JSON.stringify(Mess));
+            setMessage('');
+        } else {
+            console.log("Chưa kết nối WebSocket hoặc chưa nhập tin nhắn.");
+        }
     };
 
-  
-    const connectToWebSocket = async () => {
-      try {
-          const ws = new WebSocket('ws://localhost:8080/ws');
-          const client = Stomp.over(ws);
-  
-          client.connect(
-              { Authorization: `Bearer .eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBZmlRNzI0MVdqIiwiaWF0IjoxNzI5ODY3MTc3LCJleHAiOjE3MzA0NzE5Nzd9.fIFE0-UxZX0xGbSVG5VKxaexfyPrdSHtbpRHY0i7zcs` }, // JWT
-              (frame) => {
-                  console.log('Đã kết nối đến WebSocket server: ' + frame);
-                  
-                  setStomClient(client); // Cập nhật lại giá trị `stompClient`
-                  
-                  // Đăng ký một endpoint với client
-                  client.subscribe('/topic/messages', (message) => {
-                    console.log(message);
-                    console.log("......");
-                    
-                      const msg = JSON.parse(message.body);
-                      console.log('Nhận tin nhắn từ server: ', msg.content);
-                      setReceivedMessages((prevMessages) => [...prevMessages, msg.content]);
-                  });
-  
-                  const connectMessage = {
-                      type: 'connect',
-                      content: 'User đã tham gia',
-                      sender: username,
-                  };
-                  client.send('/app/chat', {}, JSON.stringify(connectMessage));
-              },
-              (error) => {
-                  console.error('Connection error: ' + error);
-              }
-          );
-      } catch (e) {
-          console.log('Error connecting to WebSocket:', e);
-      }
-  };
-  
     return (
       <div className="App">
         <div>

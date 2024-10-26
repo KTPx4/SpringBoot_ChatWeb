@@ -1,6 +1,7 @@
 package com.Px4.ChatAPI.config;
 
 import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
+import com.Px4.ChatAPI.controllers.socket.JwtAuthenticationException;
 import com.Px4.ChatAPI.models.message.MessageChat;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -19,6 +21,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -26,27 +29,34 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.messaging.simp.stomp.StompCommand;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 @Configuration
 @EnableWebSocketMessageBroker
-@Order(Ordered.HIGHEST_PRECEDENCE + 99)
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final JwtUtil jwtUtil;
+
+
+
+    private final UserDetailsService userDetailsService;
+
+
+
     @Autowired
-    private JwtUtil jwtUtil;
+    public WebSocketConfig(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+        this.jwtUtil = jwtUtil;
+        this.userDetailsService = userDetailsService;
+
+    }
 
 
-    @Autowired
-    private UserDetailsService userDetailsService;
-
-    private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic");
+        registry.enableSimpleBroker("/topic", "/list");
         registry.setApplicationDestinationPrefixes("/app");
     }
 
@@ -64,44 +74,40 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 StompHeaderAccessor accessor =  MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-                try{
-                    assert accessor != null;
-                        // Lấy token từ header "Authorization"
-                    System.out.println("Headers: {}" + accessor);
-
-                    assert accessor != null;
-                    if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-
+                try {
+                    if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
                         String token = accessor.getFirstNativeHeader("Authorization");
-                        System.out.println("ok:" + token);
 
+                        if (token == null || !token.startsWith("Bearer ")) {
+                            // Gắn cờ lỗi vào header
+                            throw new JwtAuthenticationException("miss value");
 
-                        if (token != null && token.startsWith("Bearer ")) {
-                            token = token.substring(7);
-                            String id = jwtUtil.extractID(token);
-                            System.out.println("id:" + id);
+                        }
 
-                            if (id != null) {
-                                UserDetails userDetails = userDetailsService.loadUserByUsername(id);
-                                boolean valid = false;
-                                valid = jwtUtil.validateToken(token, userDetails);
+                        token = token.substring(7);
+                        String id = jwtUtil.extractID(token);
 
-                                if (valid) {
-                                    System.out.println("ok valid:" + token);
+                        if (id != null) {
+                            UserDetails userDetails = userDetailsService.loadUserByUsername(id);
 
-                                    UsernamePasswordAuthenticationToken auth =
-                                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                                    SecurityContextHolder.getContext().setAuthentication(auth);
-                                    accessor.setUser(auth);
-                                }
+                            if (jwtUtil.validateToken(token, userDetails)) {
+                                UsernamePasswordAuthenticationToken auth =
+                                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                                SecurityContextHolder.getContext().setAuthentication(auth);
+                                accessor.setUser(auth);
+                                accessor.getSessionAttributes().put("id", id);
+                                return message;
                             }
                         }
+
+                        // Token không hợp lệ
+                        accessor.setNativeHeader("error", "Invalid Authorization token");
+                        return null;
                     }
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                    sendErrorMessage(accessor.getSessionId(), e.getMessage());
-                    return null;
+                } catch (Exception e) {
+                    //e.printStackTrace();
+                    throw new JwtAuthenticationException(e.getMessage());
+
                 }
 
                 return message;
@@ -109,22 +115,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         });
     }
 
-    private void sendErrorMessage(String sessionId, String errorMessage) {
-        MessageChat errorMessageObj = new MessageChat("error", errorMessage, "server");
-        String jsonErrorMessage;
-        try {
-            jsonErrorMessage = objectMapper.writeValueAsString(errorMessageObj);
-            for (WebSocketSession session : sessions) {
-                if (session.getId().equals(sessionId)) {
-                    session.sendMessage(new TextMessage(jsonErrorMessage));
-                    session.close();  // Close the connection
-                    break;
-                }
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
 
 
 
