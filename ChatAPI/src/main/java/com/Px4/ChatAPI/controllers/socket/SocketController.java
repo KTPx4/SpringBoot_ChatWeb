@@ -23,13 +23,14 @@ public class SocketController {
 
     // Mapping đến endpoint /app/chat để xử lý tin nhắn chat
     @MessageMapping("/chat")
-    @SendTo("/topic/messages")
-    public MessageChat sendMessage(MessageChat message) {
+//    @SendTo("/topic/messages")
+    public void sendMessage(MessageChat message) {
         // Lấy username từ token để gán cho tin nhắn
         System.out.println("message get: " + message.toString());
 
-
-        return message; // Hoặc xử lý khi không xác thực được
+        messagingTemplate.convertAndSend("/topic/messages", message);
+        //return message; // Hoặc xử lý khi không xác thực được
     }
+
 
 }
