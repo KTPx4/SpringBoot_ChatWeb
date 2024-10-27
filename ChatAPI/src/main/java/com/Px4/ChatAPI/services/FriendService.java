@@ -31,6 +31,7 @@ public class FriendService {
     String typeNon = FriendModel.typeNon;
     String typeWait = FriendModel.typeWaiting;
     String typeResponse = FriendModel.typeResponse;
+
     String statusBlocked = FriendModel.statusBlocked;
     String statusBlockedBy = FriendModel.statusBlockedBy;
     String statusNormal = FriendModel.statusNormal;
@@ -145,7 +146,7 @@ public class FriendService {
         friendRepository.save(user2Friend);
     }
 
-    private List<FriendModel> GetRelationShip(String user1, String user2) throws Exception
+    public  List<FriendModel> GetRelationShip(String user1, String user2) throws Exception
     {
         checkUser(user1, user2);
         Optional<FriendModel> friendUser1 = friendRepository.findByAccountIDAndFriendID(user1, user2);
@@ -216,6 +217,7 @@ System.out .println("Status:" + status);
         setFriend(idUser, friendID, false);
         return true;
     }
+
     public boolean isFriend(String friendID)
     {
         try{
@@ -229,6 +231,7 @@ System.out .println("Status:" + status);
             return false;
         }
     }
+
     public boolean actionStatus(String friendID) throws Exception
     {
         String idUser = jwtRequestFilter.getIdfromJWT();
@@ -244,5 +247,22 @@ System.out .println("Status:" + status);
         }
         else throw new Exception("friend-You have been blocked by this user");
         return true;
+    }
+
+    public boolean canChat(String userId1, String userId2)
+    {
+        try{
+            List<FriendModel> friendList = GetRelationShip(userId1, userId2);
+            FriendModel user1Friend = friendList.get(0);
+
+            FriendModel user2Friend = friendList.get(1);
+            return user1Friend.getIsFriend() && user2Friend.getIsFriend() &&
+                    user1Friend.getStatus().toLowerCase().equals(statusNormal) &&
+                    user2Friend.getStatus().toLowerCase().equals(statusNormal);
+        }
+        catch (Exception e)
+        {
+            return false;
+        }
     }
 }
