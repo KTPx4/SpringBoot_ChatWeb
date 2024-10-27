@@ -46,16 +46,37 @@ public class WebSocketEventListener   {
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectEvent event) {
 
-        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
+        try {
+            StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
 
-        // Lấy id từ session attributes
-        String id = (String) headerAccessor.getSessionAttributes().get("id");
 
-        String idSession = headerAccessor.getSessionId();
-        if(id != null && !id.isEmpty() && idSession != null && !idSession.isEmpty())
-        {
-            addSession(id, idSession);
+            if(headerAccessor.getSessionAttributes() != null && headerAccessor.getSessionAttributes().get("id") != null)
+            {
+                // Lấy id từ session attributes
+                String id = (String) headerAccessor.getSessionAttributes().get("id");
+
+                String idSession = headerAccessor.getSessionId();
+                if(id != null && !id.isEmpty() && idSession != null && !idSession.isEmpty())
+                {
+                    addSession(id, idSession);
+                }
+
+                String json = getUserSessionsAsJson();
+                // Gửi JSON qua WebSocket hoặc REST API
+                // Ví dụ: sendToWebSocket(json);
+                System.out.println(json);
+                MessageChat messRes = new MessageChat("online", json, "server", "");
+
+                messagingTemplate.convertAndSend("/list/online", messRes);
+            }
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+
+
       //  System.out.println("Received a new WebSocket connection: " + id +"-session: " + idSession);
 
 
@@ -65,13 +86,20 @@ public class WebSocketEventListener   {
     public void handleWebSocketConnectedListener(SessionConnectedEvent event) {
 
         try {
-            String json = getUserSessionsAsJson();
-            // Gửi JSON qua WebSocket hoặc REST API
-            // Ví dụ: sendToWebSocket(json);
-            System.out.println(json);
-            MessageChat messRes = new MessageChat("online", json, "server");
+            StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
 
-            messagingTemplate.convertAndSend("/list/online", messRes);
+
+            if(headerAccessor.getSessionAttributes() != null && headerAccessor.getSessionAttributes().get("id") != null)
+            {
+                String json = getUserSessionsAsJson();
+                // Gửi JSON qua WebSocket hoặc REST API
+                // Ví dụ: sendToWebSocket(json);
+              //  System.out.println(json);
+                MessageChat messRes = new MessageChat("online", json, "server", "");
+
+                messagingTemplate.convertAndSend("/list/online", messRes);
+            }
+
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -81,27 +109,36 @@ public class WebSocketEventListener   {
 
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
-     //   messagingTemplate.convertAndSend("/topic/messages", username + " has disconnected.");
-        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-
-        // Lấy id từ session attributes
-
 
         try {
-            String idSession = headerAccessor.getSessionId();
 
-            removeSession(idSession);
+            StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
 
-            String json = getUserSessionsAsJson();
 
-            System.out.println(json);
-            MessageChat messRes = new MessageChat("online", json, "server");
+            if(headerAccessor.getSessionAttributes() != null && headerAccessor.getSessionAttributes().get("id") != null)
+            {
+                String id = (String) headerAccessor.getSessionAttributes().get("id");
 
-            messagingTemplate.convertAndSend("/list/online", messRes);
+                String idSession = headerAccessor.getSessionId();
+                if(id != null && !id.isEmpty() && idSession != null && !idSession.isEmpty())
+                {
+                    removeSession(idSession);
+                }
+
+                String json = getUserSessionsAsJson();
+                // Gửi JSON qua WebSocket hoặc REST API
+                // Ví dụ: sendToWebSocket(json);
+             //   System.out.println(json);
+                MessageChat messRes = new MessageChat("online", json, "server", "");
+
+                messagingTemplate.convertAndSend("/list/online", messRes);
+            }
+
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
 

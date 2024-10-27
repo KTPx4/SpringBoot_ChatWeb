@@ -21,4 +21,6 @@ public class ResponeMessage {
     public static String passRequire ="Password is required";
     public static String emailRequire ="Email is required";
     public static String invalidEmail = "Invalid email format!";
+
+    public static String ErrorSendMessage = "Something went wrong!";
 }

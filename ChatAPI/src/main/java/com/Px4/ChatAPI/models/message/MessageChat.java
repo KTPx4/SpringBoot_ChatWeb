@@ -5,6 +5,7 @@ public class MessageChat {
     private String type;
     private String content;
     private String sender;
+    private String to;
 
     public MessageChat() {
     }
@@ -33,10 +34,18 @@ public class MessageChat {
         this.sender = sender;
     }
 
-    public MessageChat(String type, String content, String sender) {
+    public MessageChat(String type, String content, String sender, String to) {
         this.type = type;
         this.content = content;
         this.sender = sender;
+        this.to = to;
+    }
+    public String getTo() {
+        return to;
+    }
+
+    public void setTo(String to) {
+        this.to = to;
     }
 
     @Override
@@ -45,6 +54,7 @@ public class MessageChat {
                 "type='" + type + '\'' +
                 ", content='" + content + '\'' +
                 ", sender='" + sender + '\'' +
+                ", to='" + to + '\'' +
                 '}';
     }
 }
