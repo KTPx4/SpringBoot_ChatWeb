@@ -2,7 +2,7 @@ package com.Px4.ChatAPI.services;
 
 import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
 import com.Px4.ChatAPI.controllers.requestParams.account.RegisterParams;
-import com.Px4.ChatAPI.models.ConverDateTime;
+import com.Px4.ChatAPI.models.Px4Generate;
 import com.Px4.ChatAPI.models.jwt.BlackListModel;
 import com.Px4.ChatAPI.models.jwt.BlackListRepository;
 import com.Px4.ChatAPI.models.account.*;
@@ -150,7 +150,7 @@ public class AccountService {
 
         BlackListModel blackListModel = BlackListModel.createWithCurrentTime(blackListRepository.count() + 1 ,token);
         blackListRepository.save( blackListModel);
-        ConverDateTime.toHCMtime(blackListModel.getCreatedAt());
+        Px4Generate.toHCMtime(blackListModel.getCreatedAt());
         return token;
     }
 
