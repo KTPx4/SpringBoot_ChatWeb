@@ -1,13 +1,14 @@
 package com.Px4.ChatAPI.services;
 
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
-import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
-import com.Px4.ChatAPI.models.ConverDateTime;
+import com.Px4.ChatAPI.models.Px4Generate;
 import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.account.AccountRepository;
 import com.Px4.ChatAPI.models.friend.FriendDetail;
 import com.Px4.ChatAPI.models.friend.FriendModel;
 import com.Px4.ChatAPI.models.friend.FriendRepository;
+import com.Px4.ChatAPI.models.message.GroupModel;
+import com.Px4.ChatAPI.models.message.GroupRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,9 @@ public class FriendService {
 
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
+
+    @Autowired
+    private GroupRepository groupRepository;
 
     String typeNon = FriendModel.typeNon;
     String typeWait = FriendModel.typeWaiting;
@@ -65,12 +69,15 @@ public class FriendService {
             if(acc.isPresent())
             {
                 AccountModel account = acc.get();
+
+                GroupModel gr = initGroup(id, idFriend);
+
                 friendDetail = new FriendDetail(
                         account.getId(), account.getName(),
                         account.getUserProfile(), account.getImage(),
-                        friendModel.getStatus(), ConverDateTime.toHCMtime(friendModel.getCreatedAt()),
+                        friendModel.getStatus(), Px4Generate.toHCMtime(friendModel.getCreatedAt()),
                         friendModel.getType(),
-                        friendModel.getIsFriend());
+                        friendModel.getIsFriend() , gr.getId());
             }
 
         }
@@ -173,10 +180,37 @@ public class FriendService {
 
         createList.add(newFriend2);
 
+        initGroup(user1, user2);
+
+
         return createList;
 
     }
+    public GroupModel initGroup(String user1, String user2)
+    {
+        // check group chat
+        List<String> listMember = Arrays.asList(user1, user2);
 
+        Optional<GroupModel> group = groupRepository.findGroupByTwoMembersExactMatch(listMember);
+        GroupModel gr = null;
+        if(group.isEmpty())
+        {
+            boolean lop = true;
+            String id = "";
+            do{
+                id = Px4Generate.generateChar(18);
+                Optional<GroupModel> group2 = groupRepository.findById(id);
+                lop = group2.isPresent();
+            }
+            while (lop);
+
+            gr = new GroupModel(id, true, listMember);
+            groupRepository.save(gr);
+        }
+        else gr = group.get();
+
+        return gr;
+    }
     public boolean addFriend(String friendID) throws Exception
     {
 
@@ -229,6 +263,19 @@ System.out .println("Status:" + status);
         catch (Exception e)
         {
             return false;
+        }
+    }
+    public boolean isBlocked(String friendID)
+    {
+        try{
+            String idUser = jwtRequestFilter.getIdfromJWT();
+            List<FriendModel> listRelation = GetRelationShip(idUser, friendID);
+            FriendModel Friend = listRelation.getFirst(); // friend model of idUser: 0 - friend model of friendID: 1
+            return Friend.getStatus().toLowerCase().equals(statusBlocked) || Friend.getStatus().toLowerCase().equals(statusBlockedBy) ;
+        }
+        catch (Exception e)
+        {
+            return true;
         }
     }
 

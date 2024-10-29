@@ -1,22 +1,43 @@
 package com.Px4.ChatAPI.models.friend;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Date;
 
 public class FriendDetail {
+    @Getter
+    @Setter
     private String id;
+    @Getter
+    @Setter
     private String name;
+    @Getter
+    @Setter
     private String userProfile;
+    @Getter
+    @Setter
     private String image;
-
+    @Getter
+    @Setter
+    private String groupId;
+    @Getter
+    @Setter
     private String status;
+    @Getter
+    @Setter
     private String createdAt;
+    @Getter
+    @Setter
     private String type;
+    @Getter
+    @Setter
     private boolean isFriend;
 
     public FriendDetail() {
     }
 
-    public FriendDetail(String id, String name, String userProfile, String image, String status, String createdAt, String type, boolean isFriend) {
+    public FriendDetail(String id, String name, String userProfile, String image, String status, String createdAt, String type, boolean isFriend, String groupId) {
         this.id = id;
         this.name = name;
         this.userProfile = userProfile;
@@ -25,69 +46,8 @@ public class FriendDetail {
         this.createdAt = createdAt;
         this.type = type;
         this.isFriend = isFriend;
+        this.groupId = groupId;
     }
 
-    public String getType() {
-        return type;
-    }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public boolean isFriend() {
-        return isFriend;
-    }
-
-    public void setFriend(boolean friend) {
-        isFriend = friend;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getUserProfile() {
-        return userProfile;
-    }
-
-    public void setUserProfile(String userProfile) {
-        this.userProfile = userProfile;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(String createdAt) {
-        this.createdAt = createdAt;
-    }
 }

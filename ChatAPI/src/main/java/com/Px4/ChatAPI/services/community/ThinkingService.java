@@ -58,16 +58,18 @@ public class ThinkingService {
                     String type = thinking.get().getType().toLowerCase();
                     List<String> shows = thinking.get().getShows();
                     boolean isFriend = friendService.isFriend(friendId);
-                    if(type.equals("public") || (type.equals("friends") && isFriend) || shows.contains(USER_ID))
+                    boolean isBlocked = friendService.isBlocked(friendId);
+                    if(type.equals("public") || (type.equals("friends") && isFriend && !isBlocked) || shows.contains(USER_ID))
                     {
-                        
+                        listThinking.add(thinking.get());
                     }
                 }
             });
+            return listThinking;
         }
         catch (Exception e)
         {
-
+            System.out.println( "ThinkingService-getFriendThinkin: " + e.getMessage());
         }
 
         return null;

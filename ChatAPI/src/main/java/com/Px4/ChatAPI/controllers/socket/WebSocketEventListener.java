@@ -1,12 +1,12 @@
 package com.Px4.ChatAPI.controllers.socket;
-import com.Px4.ChatAPI.models.message.MessageChat;
+import com.Px4.ChatAPI.models.message.MessageRequest;
+import com.Px4.ChatAPI.models.message.MessageResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
@@ -64,8 +64,8 @@ public class WebSocketEventListener   {
                 String json = getUserSessionsAsJson();
                 // Gửi JSON qua WebSocket hoặc REST API
                 // Ví dụ: sendToWebSocket(json);
-                System.out.println(json);
-                MessageChat messRes = new MessageChat("online", json, "server", "");
+
+                MessageResponse messRes = new MessageResponse("online", "server", "all", json, "json");
 
                 messagingTemplate.convertAndSend("/list/online", messRes);
             }
@@ -95,7 +95,7 @@ public class WebSocketEventListener   {
                 // Gửi JSON qua WebSocket hoặc REST API
                 // Ví dụ: sendToWebSocket(json);
               //  System.out.println(json);
-                MessageChat messRes = new MessageChat("online", json, "server", "");
+                MessageResponse messRes = new MessageResponse("online", "server", "all", json, "json");
 
                 messagingTemplate.convertAndSend("/list/online", messRes);
             }
@@ -126,10 +126,8 @@ public class WebSocketEventListener   {
                 }
 
                 String json = getUserSessionsAsJson();
-                // Gửi JSON qua WebSocket hoặc REST API
-                // Ví dụ: sendToWebSocket(json);
-             //   System.out.println(json);
-                MessageChat messRes = new MessageChat("online", json, "server", "");
+
+                MessageResponse messRes = new MessageResponse("online", "server", "all", json, "json");
 
                 messagingTemplate.convertAndSend("/list/online", messRes);
             }
