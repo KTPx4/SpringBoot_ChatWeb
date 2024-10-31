@@ -1,4 +1,4 @@
-package com.Px4.ChatAPI.models.friend;
+package com.Px4.ChatAPI.models.relation;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -50,5 +50,18 @@ public class FriendModel{
         this.status = "normal";
         this.isFriend = false;
         this.Type = "non";
+    }
+
+    @Override
+    public String toString() {
+        return "FriendModel{" +
+                "id='" + id + '\'' +
+                ", accountID='" + accountID + '\'' +
+                ", friendID='" + friendID + '\'' +
+                ", status='" + status + '\'' +
+                ", createdAt=" + createdAt +
+                ", isFriend=" + isFriend +
+                ", Type='" + Type + '\'' +
+                '}';
     }
 }

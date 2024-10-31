@@ -3,9 +3,9 @@ package com.Px4.ChatAPI.services.community;
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.models.community.ThinkingModel;
 import com.Px4.ChatAPI.models.community.ThinkingRepository;
-import com.Px4.ChatAPI.models.friend.FriendModel;
-import com.Px4.ChatAPI.models.friend.FriendRepository;
-import com.Px4.ChatAPI.services.FriendService;
+import com.Px4.ChatAPI.models.relation.FriendModel;
+import com.Px4.ChatAPI.models.relation.FriendRepository;
+import com.Px4.ChatAPI.services.RelationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +25,7 @@ public class ThinkingService {
     FriendRepository friendRepository;
 
     @Autowired
-    FriendService friendService;
+    RelationService relationService;
 
 
 
@@ -57,8 +57,8 @@ public class ThinkingService {
                 {
                     String type = thinking.get().getType().toLowerCase();
                     List<String> shows = thinking.get().getShows();
-                    boolean isFriend = friendService.isFriend(friendId);
-                    boolean isBlocked = friendService.isBlocked(friendId);
+                    boolean isFriend = relationService.isFriend(friendId);
+                    boolean isBlocked = relationService.isBlocked(friendId);
                     if(type.equals("public") || (type.equals("friends") && isFriend && !isBlocked) || shows.contains(USER_ID))
                     {
                         listThinking.add(thinking.get());

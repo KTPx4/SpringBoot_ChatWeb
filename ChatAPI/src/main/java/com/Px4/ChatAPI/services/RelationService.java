@@ -1,14 +1,14 @@
 package com.Px4.ChatAPI.services;
 
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
+import com.Px4.ChatAPI.controllers.requestParams.relation.RequestGroup;
+import com.Px4.ChatAPI.controllers.requestParams.relation.ResponseGroup;
 import com.Px4.ChatAPI.models.Px4Generate;
 import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.account.AccountRepository;
-import com.Px4.ChatAPI.models.friend.FriendDetail;
-import com.Px4.ChatAPI.models.friend.FriendModel;
-import com.Px4.ChatAPI.models.friend.FriendRepository;
-import com.Px4.ChatAPI.models.message.GroupModel;
-import com.Px4.ChatAPI.models.message.GroupRepository;
+import com.Px4.ChatAPI.models.message.ConversationModel;
+import com.Px4.ChatAPI.models.message.ConversationRepository;
+import com.Px4.ChatAPI.models.relation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class FriendService {
+public class RelationService {
 
     @Autowired
     private FriendRepository friendRepository;
@@ -31,6 +31,10 @@ public class FriendService {
 
     @Autowired
     private GroupRepository groupRepository;
+    @Autowired
+    private ConversationRepository conversationRepository;
+    @Autowired
+    private GroupSettingRepository groupSettingRepository;
 
     String typeNon = FriendModel.typeNon;
     String typeWait = FriendModel.typeWaiting;
@@ -55,6 +59,7 @@ public class FriendService {
         });
         return list;
     }
+
     public FriendDetail getById(String idFriend)
     {
         String id = jwtRequestFilter.getIdfromJWT();
@@ -77,7 +82,7 @@ public class FriendService {
                         account.getUserProfile(), account.getImage(),
                         friendModel.getStatus(), Px4Generate.toHCMtime(friendModel.getCreatedAt()),
                         friendModel.getType(),
-                        friendModel.getIsFriend() , gr.getId());
+                        friendModel.getIsFriend());
             }
 
         }
@@ -91,8 +96,6 @@ public class FriendService {
         if(!accountRepository.existsById(user1)) throw new Exception("friend-Your account not found");
         if(!accountRepository.existsById(user2)) throw new Exception("friend-Your friend account not found");
     }
-
-
 
     private void setFriend(String user1, String user2, boolean isFriend) throws Exception
     {
@@ -174,7 +177,7 @@ public class FriendService {
         if(friendUser2.isEmpty()) // Create for user 2 if not exists
         {
             newFriend2 = new FriendModel(user2, user1);
-            friendRepository.save(newFriend2);
+           friendRepository.save(newFriend2);
         }
         else newFriend2 = friendUser2.get();
 
@@ -188,28 +191,52 @@ public class FriendService {
     }
     public GroupModel initGroup(String user1, String user2)
     {
-        // check group chat
-        List<String> listMember = Arrays.asList(user1, user2);
 
-        Optional<GroupModel> group = groupRepository.findGroupByTwoMembersExactMatch(listMember);
-        GroupModel gr = null;
-        if(group.isEmpty())
+        List<GroupModel> groups = groupRepository.findAll();
+        GroupModel newGroup = new GroupModel();
+
+       for(GroupModel gr : groups)
+       {
+
+           if(gr.isPvP() && gr.getMembers().size() == 2 && gr.getMembers().contains(user1) && gr.getMembers().contains(user2))
+           {
+
+               newGroup.setId(gr.getId());
+               newGroup.setName(gr.getName());
+               newGroup.setPvP(gr.isPvP());
+               newGroup.setMembers(gr.getMembers());
+               break;
+           }
+       }
+
+        //Create Group if not exists
+        if(newGroup.getId() == null  || newGroup.getId().equals(""))
         {
-            boolean lop = true;
-            String id = "";
-            do{
-                id = Px4Generate.generateChar(18);
-                Optional<GroupModel> group2 = groupRepository.findById(id);
-                lop = group2.isPresent();
-            }
-            while (lop);
+            String name = "Chat";
 
-            gr = new GroupModel(id, true, listMember);
-            groupRepository.save(gr);
+            newGroup = new GroupModel(name, true, Arrays.asList(user1, user2));
+            newGroup = groupRepository.save(newGroup);
         }
-        else gr = group.get();
 
-        return gr;
+        GroupSettingModel groupSettingModel = groupSettingRepository.findByGroupId(newGroup.getId());
+
+        if(groupSettingModel == null)
+        {
+            GroupSettingModel grSetting = new GroupSettingModel(newGroup.getId(), "non"); // setting for group
+            grSetting = groupSettingRepository.save(grSetting);
+        }
+
+        // Create conversation of group if not exists
+        Optional<ConversationModel> cv = conversationRepository.findByGroupId(newGroup.getId());
+        if(cv.isEmpty())
+        {
+
+            ConversationModel conv = new ConversationModel(newGroup.getId());
+            conv = conversationRepository.save(conv);
+        }
+
+
+        return newGroup;
     }
     public boolean addFriend(String friendID) throws Exception
     {
@@ -222,7 +249,7 @@ public class FriendService {
 
         String type = Friend.getType().toLowerCase();
         String status = Friend.getStatus().toLowerCase();
-System.out .println("Status:" + status);
+
         if(status.equals(statusBlockedBy.toLowerCase())) throw new Exception("friend-You has been blocked can't action");
         else if(status.equals(statusBlocked.toLowerCase())) throw new Exception("friend-You has been Blocked this user");
 
@@ -296,20 +323,70 @@ System.out .println("Status:" + status);
         return true;
     }
 
-    public boolean canChat(String userId1, String userId2)
+    public boolean canChat(String userId1, String userId2) throws Exception
     {
-        try{
+
             List<FriendModel> friendList = GetRelationShip(userId1, userId2);
             FriendModel user1Friend = friendList.get(0);
 
             FriendModel user2Friend = friendList.get(1);
-            return user1Friend.getIsFriend() && user2Friend.getIsFriend() &&
-                    user1Friend.getStatus().toLowerCase().equals(statusNormal) &&
-                    user2Friend.getStatus().toLowerCase().equals(statusNormal);
-        }
-        catch (Exception e)
+
+            return user1Friend.getStatus().toLowerCase().equals(statusNormal) &&  user2Friend.getStatus().toLowerCase().equals(statusNormal);
+//        try{
+//
+//        }
+//        catch (Exception e)
+//        {
+//            throw e;
+//            return false;
+//        }
+    }
+
+    public List<GroupModel> getAllGroup()
+    {
+        String userId = jwtRequestFilter.getIdfromJWT();
+        System.out.println("user: " +userId);
+        List<GroupModel> groupList = groupRepository.findAll();
+        List<GroupModel> grResponse = new ArrayList<>();
+        for(GroupModel group : groupList)
         {
-            return false;
+            if(!group.isPvP() && group.getMembers().contains(userId))
+            {
+                grResponse.add(group);
+            }
         }
+        return grResponse;
+    }
+
+    public ResponseGroup createGroup(RequestGroup requestGroup) throws Exception
+    {
+        String userId = jwtRequestFilter.getIdfromJWT();
+        List<String> members = requestGroup.getUsers();
+        if(members.size() < 2) throw new Exception("group-Cant create group less than 2 members");
+
+        List<String> listUser = new ArrayList<>();
+        members.forEach(id->{
+            if(accountRepository.existsById(id))
+            {
+                listUser.add(id);
+            }
+        });
+
+        if(listUser.size() < 2) throw new Exception("group-Have user not found or can not create group");
+
+
+        GroupModel gr = new GroupModel(requestGroup.getName(), listUser);
+
+        gr = groupRepository.save(gr);
+
+        GroupSettingModel grSetting = new GroupSettingModel(gr.getId(), userId); // setting for group
+        grSetting = groupSettingRepository.save(grSetting);
+
+        ConversationModel cv = new ConversationModel(gr.getId()); // create conversation for group
+        cv = conversationRepository.save(cv);
+        System.out.println("Relation Service - createGroup - create conversation");
+
+        ResponseGroup response = new ResponseGroup(gr, grSetting);
+        return response;
     }
 }

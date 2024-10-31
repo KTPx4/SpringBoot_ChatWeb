@@ -1,4 +1,4 @@
-package com.Px4.ChatAPI.models.message;
+package com.Px4.ChatAPI.models.relation;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -14,23 +14,38 @@ public class GroupModel {
     @Getter
     @Setter
     private String id;
+    @Getter
+    @Setter
+    private String name;
     @Setter
     @Getter
     private boolean isPvP;
 
     @Getter
+    @Setter
     private List<String> members;
 
-    public GroupModel(String id, boolean isPvP) {
-        this.id = id;
-        this.isPvP = isPvP;
-        this.members = new ArrayList<>();
+    public GroupModel(String name,  List<String> members) {
+        this.name = name;
+        this.isPvP = false;
+        this.members = members;
     }
-    public GroupModel(String id, boolean isPvP, List<String> members) {
-        this.id = id;
+    public GroupModel(String name, boolean isPvP, List<String> members) {
+        this.name = name;
         this.isPvP = isPvP;
         this.members = members;
     }
+    public GroupModel(GroupModel group)
+    {
+        this.id = group.getId();
+        this.name = group.getName();
+        this.isPvP = group.isPvP();
+        this.members = group.getMembers();
+
+    }
+
+    public GroupModel() {}
+
     public void addMember(String memberId)
     {
         members.add(memberId);

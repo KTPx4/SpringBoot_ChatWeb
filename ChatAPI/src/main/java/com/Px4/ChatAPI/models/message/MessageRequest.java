@@ -13,10 +13,6 @@ public class MessageRequest {
     @Setter
     private String to; // id group
 
-//    @Getter
-//    @Setter
-//    private boolean isGroup;
-
     @Getter
     @Setter
     private String content;
