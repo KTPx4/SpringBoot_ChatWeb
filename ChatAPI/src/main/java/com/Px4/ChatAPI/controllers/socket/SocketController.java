@@ -5,6 +5,7 @@ import com.Px4.ChatAPI.models.message.MessageModel;
 import com.Px4.ChatAPI.models.message.MessageRequest;
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.models.message.MessageResponse;
+import com.Px4.ChatAPI.models.relation.GroupModel;
 import com.Px4.ChatAPI.services.chat.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Header;
@@ -49,8 +50,8 @@ public class SocketController {
 
         // loop group and send each members
         try{
-            List<String> members = chatService.canSendMess(userID, groupId);
-            if(members.size() > 0)
+            GroupModel gr = chatService.canSendMess(userID, groupId);
+            if(gr.getMembers().size() > 0)
             {
                 // create message model
 
@@ -62,11 +63,11 @@ public class SocketController {
 
                 String contentType = message.getContentType();
 
-                MessageModel messDB =  chatService.createMessage(groupId, userID, message.getContentType(), message.getContent(), message.getReplyMessageId()); // create from db
+                MessageModel messDB =  chatService.createMessage(gr.getId(), userID, message.getContentType(), message.getContent(), message.getReplyMessageId()); // create from db
 
                 messResponse.setId(messDB.getId()); // set id of message model
 
-                members.forEach(id -> { // send notice to each member
+                gr.getMembers().forEach(id -> { // send notice to each member
                     switch (contentType)
                     {
                         case "text":

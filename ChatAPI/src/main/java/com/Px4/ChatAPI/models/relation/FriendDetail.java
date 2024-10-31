@@ -1,9 +1,7 @@
-package com.Px4.ChatAPI.models.friend;
+package com.Px4.ChatAPI.models.relation;
 
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.Date;
 
 public class FriendDetail {
     @Getter
@@ -18,9 +16,7 @@ public class FriendDetail {
     @Getter
     @Setter
     private String image;
-    @Getter
-    @Setter
-    private String groupId;
+
     @Getter
     @Setter
     private String status;
@@ -37,7 +33,7 @@ public class FriendDetail {
     public FriendDetail() {
     }
 
-    public FriendDetail(String id, String name, String userProfile, String image, String status, String createdAt, String type, boolean isFriend, String groupId) {
+    public FriendDetail(String id, String name, String userProfile, String image, String status, String createdAt, String type, boolean isFriend) {
         this.id = id;
         this.name = name;
         this.userProfile = userProfile;
@@ -46,7 +42,7 @@ public class FriendDetail {
         this.createdAt = createdAt;
         this.type = type;
         this.isFriend = isFriend;
-        this.groupId = groupId;
+
     }
 
 

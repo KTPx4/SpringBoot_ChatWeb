@@ -32,6 +32,7 @@ public class ConversationModel {
     @Setter
     private Date createdAt;
 
+    public ConversationModel() {}
     public ConversationModel(String groupId) {
         this.groupId = groupId;
         isStored = false;

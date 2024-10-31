@@ -1,8 +1,7 @@
-package com.Px4.ChatAPI.models.friend;
+package com.Px4.ChatAPI.models.relation;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;

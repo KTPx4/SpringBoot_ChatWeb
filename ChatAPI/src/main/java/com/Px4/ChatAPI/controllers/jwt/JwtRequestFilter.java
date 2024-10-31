@@ -88,7 +88,7 @@
 
                 // find username by id của jwt token
                 Optional<AccountModel> acc = accountService.getAccountById(idUser);
-                username = acc.isPresent() ? acc.get().getUsername() : null;
+                username = acc.isPresent() ? acc.get().getId() : null;
 
 
                 // Xác thực người dùng nếu có token và người dùng chưa được xác thực trong SecurityContextHolder

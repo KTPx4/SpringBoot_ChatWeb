@@ -1,9 +1,9 @@
-package com.Px4.ChatAPI.controllers.friend;
+package com.Px4.ChatAPI.controllers.relation;
 
 import com.Px4.ChatAPI.config.ResponeMessage;
 import com.Px4.ChatAPI.models.Px4Response;
-import com.Px4.ChatAPI.models.friend.FriendDetail;
-import com.Px4.ChatAPI.services.FriendService;
+import com.Px4.ChatAPI.models.relation.FriendDetail;
+import com.Px4.ChatAPI.services.RelationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,7 @@ import java.util.List;
 @RequestMapping("/api/v1/friend")
 public class FriendController {
     @Autowired
-    private FriendService friendService;
+    private RelationService relationService;
 
     @GetMapping() // get list friend
     public ResponseEntity<Px4Response> getFriendList(){
@@ -24,7 +24,7 @@ public class FriendController {
         List<FriendDetail> listFriend = null;
         try{
 
-           listFriend = friendService.getAllFriends();
+           listFriend = relationService.getAllFriends();
 
         }
         catch(Exception e)
@@ -49,7 +49,7 @@ public class FriendController {
 
         try{
 
-            friendService.unFriend(id);
+            relationService.unFriend(id);
 
         }
         catch(Exception e)
@@ -74,7 +74,7 @@ public class FriendController {
         HttpStatus status = HttpStatus.OK;
 
         try{
-            friendService.actionStatus(id);
+            relationService.actionStatus(id);
 
         }
         catch(Exception e)
@@ -87,7 +87,6 @@ public class FriendController {
                 status = HttpStatus.BAD_REQUEST;
             }
         }
-        // handle for send make friend - accept make fiend  + set isFriend = true
         return new ResponseEntity<>(new Px4Response<>(mess, null), status);
     }
 
@@ -101,8 +100,7 @@ public class FriendController {
         FriendDetail friend = null;
         try{
 
-            friend = friendService.getById(id);
-
+            friend = relationService.getById(id);
         }
         catch(Exception e)
         {
@@ -126,7 +124,7 @@ public class FriendController {
 
         try{
 
-            friendService.addFriend(id);
+            relationService.addFriend(id);
 
         }
         catch(Exception e)
