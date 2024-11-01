@@ -1,0 +1,69 @@
+
+.btn-addFile, .btn-sendMess {
+    height: 100%;
+    width: 5% !important;
+    background: transparent;
+    border: none;
+}
+.btn-addFile{
+    margin-right: 10px;
+}
+.btn-sendMess{
+    margin-left: 10px;
+
+}
+.btn-sendMess .ant-btn-icon{
+    /*margin-left: 10px;*/
+    transform: rotate(-50deg);
+    margin-left: 5px;
+
+}
+.btn-addFile:hover, .btn-sendMess:hover{
+    background: #2f99f0 !important;
+
+}
+.ant-layout-content {
+    display: flex;
+    flex-direction: column-reverse;
+    padding: 20px;
+    overflow-y: auto;
+
+}
+
+::-webkit-scrollbar{
+    background: transparent !important;
+
+}
+::-webkit-scrollbar {
+    width: 5px; /* Chiều rộng thanh cuộn */
+}
+::-webkit-scrollbar-thumb {
+    background: #a6a4a4; /* Màu của phần cuộn */
+    border-radius: 10px; /* Bo góc thanh cuộn */
+}
+
+.message p{
+    width: fit-content;
+    background: #2f99f0;
+    padding: 10px;
+    border-radius: 20px;
+    color: white;
+
+}
+
+.ant-layout-content .message{
+    display: flex;
+}
+
+.ant-layout-content .message-me{
+    justify-content: flex-end;
+    p{
+        background: #2f99f0;
+    }
+}
+.ant-layout-content .message-friend{
+    justify-content: flex-start;
+    p{
+        background: rgba(118, 132, 145, 0.93);
+    }
+}

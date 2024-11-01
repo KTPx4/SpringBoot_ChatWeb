@@ -1,0 +1,38 @@
+
+.ant-layout-sider-dark {
+    background: linear-gradient(rgb(2, 18, 33), #4C516D) !important;
+    /*background: linear-gradient(rgb(2, 18, 33), rgb(60, 74, 88)) !important;*/
+}
+.ant-layout-sider-light {
+    background: linear-gradient(rgb(255, 255, 255), rgb(254, 238, 255)) !important;
+}
+
+
+/* Đảm bảo các thành phần bên trong có nền trong suốt để gradient áp dụng từ cha */
+.ant-layout-sider-dark .ant-layout-sider-children,
+.ant-layout-sider-dark .ant-layout-sider-trigger {
+    background: transparent !important;
+}
+
+/* Đặt nền menu trong suốt để hiển thị gradient từ cha */
+.ant-layout-sider-dark .ant-menu {
+    background: transparent !important;
+}
+.ant-layout-sider-dark .ant-list {
+    background: transparent !important;
+}
+
+
+.ant-layout-sider-light .ant-layout-sider-children,
+.ant-layout-sider-light .ant-layout-sider-trigger {
+    background: transparent !important;
+}
+
+/* Đặt nền menu trong suốt để hiển thị gradient từ cha */
+.ant-layout-sider-light .ant-menu {
+    background: transparent !important;
+}
+.ant-layout-sider-light .ant-list {
+    background: transparent !important;
+}
+
