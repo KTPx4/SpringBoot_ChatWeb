@@ -75,6 +75,9 @@ public class SocketController {
                             messagingTemplate.convertAndSendToUser(id, "/topic/messages", messResponse);
                             break;
 
+                        case "image":
+                            break;
+
                         case "file":
                             break;
 

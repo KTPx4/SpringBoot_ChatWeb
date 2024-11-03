@@ -43,12 +43,16 @@ public class MessageModel {
     {
         this.idConversation = idConversation;
         this.sender = sender;
-        this.contentType = contentType;
+        this.contentType = contentType; // text, image, file
         this.content = content;
         this.reply = "";
         this.createdAt = Date.from(Instant.now());
         this.isSystem = false;
         this.isDeleted = false;
+    }
+    public MessageModel()
+    {
+
     }
 
     public MessageModel(String idConversation, String sender,String reply, String contentType, String content)

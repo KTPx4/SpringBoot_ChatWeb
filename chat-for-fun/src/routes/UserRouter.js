@@ -1,17 +1,21 @@
-import React, {useState, useEffect} from "react";
-const UserRouter = ({children}) =>{
-    const [result, setResult] = useState(null);
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import useAuth from '../hooks/useAuth';
 
-    useEffect(() => {
+const UserRouter = ({ children }) => {
+    const token = localStorage.getItem('token-auth') || '';
 
-    }, []);
+    const { isAuthenticated, loading } = useAuth(token);
 
-    if (result)
-    {
-        console.log("User Router - result run")
-        return result;
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (!isAuthenticated) {
+        return <Navigate to="/login" />;
     }
 
     return children;
-}
+};
+
 export default UserRouter;

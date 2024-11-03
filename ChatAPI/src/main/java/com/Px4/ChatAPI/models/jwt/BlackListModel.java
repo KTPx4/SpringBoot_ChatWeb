@@ -16,7 +16,7 @@ public class BlackListModel {
     @Getter
     @Setter
     @Id
-    long id;
+    String id;
 
     @Getter
     @Setter
@@ -29,17 +29,17 @@ public class BlackListModel {
     public static long TIME_LIVE = 60 * 60 * 24 * 7;
 
     // Constructor, Getters, and Setters
-    public BlackListModel(long id, String token, Date createdAt) {
-        this.id = id;
+    public BlackListModel(String token, Date createdAt) {
+
         this.token = token;
         this.createdAt = createdAt;
     }
 
-    public static BlackListModel createWithCurrentTime(long id, String token) {
+    public static BlackListModel createWithCurrentTime( String token) {
         // Lấy thời gian hiện tại tại múi giờ địa phương (Asia/Ho_Chi_Minh)
         Date localDateTime = Date.from(Instant.now());
 
-        return new BlackListModel(id, token, localDateTime);
+        return new BlackListModel( token, localDateTime);
     }
 
 

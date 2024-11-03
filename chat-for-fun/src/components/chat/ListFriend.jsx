@@ -4,69 +4,58 @@ import React, {useState, useContext} from 'react';
 import {ThemeContext} from "../../ThemeContext";
 
 
-var data = [
-    {
-        id: '1',
-        title: 'Kieu Thanh Phat',
-        description: 'Hi, 111111111111111111111111111111111111111111111111111111111111111111',
-        avatar: 'path-to-your-avatar-image',
-        selected: true,
-        count: 2
-    },
-    {
-        id: '2',
+var data = [{
+    id: '1',
+    name: 'Kieu Thanh Phat',
+    messages: [
+        {
+            id: 'mess1',
+            contentType: "text",
+            content: 'Hi, this is message 1',
+            from: "2",
+            reply: "",
+            status: "sent"
+        },
+        {
+            id: 'mess2',
+            contentType: "text",
 
-        title: 'Nguyen Van A',
-        description: 'Hi, 2222',
-        avatar: 'path-to-your-avatar-image',
-        selected: false,
-        count: 0
-    },
-    {
-        id: '3',
-        title: 'Kieu Thanh Phat',
-        description: 'Hi, 111111111111111111111111111111111111111111111111111111111111111111',
-        avatar: 'path-to-your-avatar-image',
+            content: 'message 2',
+            from: "Px4",
+            reply: "",
+            status: "sent"
+        },
+    ],
+        avatar: 'https://avatars.githubusercontent.com/u/128300163?s=96&v=4',
         selected: false,
         count: 1
     },
-     {
-         id: '4',
-        title: 'Kieu Thanh Phat',
-        description: 'Hi, 111111111111111111111111111111111111111111111111111111111111111111',
-        avatar: 'path-to-your-avatar-image',
-         selected: false,
-        count: 8
+    {
+        id: '2',
+        name: 'Nguyen Van A',
+        messages: [
+            {
+                id: 'mess3',
+                contentType: "text",
+
+                content: 'Hi, this is message 1 of 2',
+                from: "2",
+                reply: "",
+                status: "sent"
+            },
+            {
+                id: 'mess4',
+                contentType: "image",
+                content: 'https://picsum.photos/800/900',
+                from: "2",
+                reply: "",
+                status: "sent"
+            },
+        ],
+        avatar: 'https://api.dicebear.com/9.x/adventurer/svg?seed=Ryan',
+        selected: false,
+        count: 1
     },
-
-     {
-         id: '5',
-        title: 'Kieu Thanh Phat',
-        description: 'Hi, 111111111111111111111111111111111111111111111111111111111111111111',
-        avatar: 'path-to-your-avatar-image',
-         selected: false,
-        count: 8
-    },
-
-     {
-         id: '6',
-        title: 'Kieu Thanh Phat',
-        description: 'Hi, 111111111111111111111111111111111111111111111111111111111111111111',
-        avatar: 'path-to-your-avatar-image',
-         selected: false,
-        count: 8
-    },
-
-     {
-         id: '7',
-        title: 'Kieu Thanh Phat',
-        description: 'Hi, 111111111111111111111111111111111111111111111111111111111111111111',
-        avatar: 'path-to-your-avatar-image',
-     selected: false,
-        count: 8
-    },
-
-
 ];
 
 const CardS = ({clickUser})=> {
@@ -89,7 +78,12 @@ const CardS = ({clickUser})=> {
         console.log("index: ",itemClick)
         clickUser(itemClick);
     }
+    if(dataSet.length == 0)
+    {
+        return <i className="d-flex justify-content-center" style={{color:textColor}}>Make friends to chat!!!!</i>
+    }
     return (
+
         <List itemLayout="vertical" dataSource={dataSet} split={false}
               style={{
                height: '85%',
@@ -116,13 +110,14 @@ const CardS = ({clickUser})=> {
                                                     <Avatar src={item.avatar}
                                                         style={{
                                                             height: 40, width: 40,
-                                                            background: "grey"
+                                                            background: "lightgrey"
                                                         }}
                                                     />
                                         </Badge>
                                         }
-                                    title={<span style={textStyle}>{item.title}</span>} // Áp dụng style cho title
-                                   description={<span style={textStyle}>{item.description}</span>} // Áp dụng style cho
+                                    title={<span style={textStyle}>{item.name}</span>} // Áp dụng style cho title
+
+                                  description={<span style={textStyle}>{item.messages.at(item.messages.length-1).content}</span>} // Áp dụng style cho
 
                               />
                           </Card>

@@ -20,15 +20,17 @@
 }
 .btn-addFile:hover, .btn-sendMess:hover{
     background: #2f99f0 !important;
-
+    color: white !important;
 }
-.ant-layout-content {
-    display: flex;
-    flex-direction: column-reverse;
-    padding: 20px;
-    overflow-y: auto;
 
-}
+/*.ant-layout-content {*/
+/*    display: flex;*/
+/*    flex-direction: column;*/
+/*    justify-content: flex-end;*/
+/*    padding: 20px;*/
+/*    overflow-y: auto;*/
+
+/*}*/
 
 ::-webkit-scrollbar{
     background: transparent !important;
@@ -50,6 +52,19 @@
     color: white;
 
 }
+.message .ant-image{
+    width: fit-content !important;
+}
+.theme_light{
+    h4, p{
+        color: Black !important;
+    }
+}
+.theme_dark{
+    h4, p{
+        color: white !important;
+    }
+}
 
 .ant-layout-content .message{
     display: flex;
@@ -66,4 +81,7 @@
     p{
         background: rgba(118, 132, 145, 0.93);
     }
+}
+.btn-call:hover, .btn-more:hover{
+    color: #2f99f0 !important;
 }

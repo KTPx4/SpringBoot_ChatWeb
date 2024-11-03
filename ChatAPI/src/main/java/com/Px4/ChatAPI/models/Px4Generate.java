@@ -1,9 +1,16 @@
 package com.Px4.ChatAPI.models;
 
+import com.Px4.ChatAPI.models.message.MessageModel;
+
 import java.security.SecureRandom;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 
 // Lấy thời gian từ MongoDB (UTC)
 public class Px4Generate {
@@ -21,8 +28,18 @@ public class Px4Generate {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         // Chuyển thành chuỗi với định dạng mong muốn
-        System.out.println(hcmTime.format(formatter));
+//        System.out.println(hcmTime.format(formatter));
         return hcmTime.format(formatter);
+    }
+
+    // Hàm sắp xếp danh sách MessageModel theo createdAt
+    public static void sortMessagesByDate(List<MessageModel> messages) {
+        messages.sort(new Comparator<MessageModel>() {
+            @Override
+            public int compare(MessageModel m1, MessageModel m2) {
+                return m1.getCreatedAt().compareTo(m2.getCreatedAt()); // Sắp xếp từ cũ nhất đến mới nhất
+            }
+        });
     }
 
     public static String generateChar(int length)
