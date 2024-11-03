@@ -1,5 +1,6 @@
 package com.Px4.ChatAPI.services;
 
+import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
 import com.Px4.ChatAPI.controllers.requestParams.account.RegisterParams;
 import com.Px4.ChatAPI.models.Px4Generate;
@@ -48,6 +49,7 @@ public class AccountService {
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.sendMailService = sendMailService;
+
     }
 
 
@@ -148,7 +150,7 @@ public class AccountService {
     public String logOut(String token)
     {
 
-        BlackListModel blackListModel = BlackListModel.createWithCurrentTime(blackListRepository.count() + 1 ,token);
+        BlackListModel blackListModel = BlackListModel.createWithCurrentTime(token);
         blackListRepository.save( blackListModel);
         Px4Generate.toHCMtime(blackListModel.getCreatedAt());
         return token;
@@ -221,4 +223,13 @@ public class AccountService {
 
         return true;
     }
+    public AccountModel verifyToken(String token) throws Exception
+    {
+        String idUser = jwtUtil.extractID(token); // Giả sử hàm extractUserId sẽ lấy được ID từ token
+
+        Optional<AccountModel> acc = accountRepository.findById(idUser);
+        if(acc.isEmpty()) throw new Exception("verify-Account not found");
+        return acc.get();
+    }
+
 }

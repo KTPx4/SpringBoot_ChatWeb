@@ -50,7 +50,29 @@ public class AccountController {
         return accounService.getAllAccounts();
     }
 
-    
+    @GetMapping("/verify")
+    public ResponseEntity<Px4Response> verifyToken(@RequestHeader("Authorization") String authorizationHeader)
+    {
+        String mess = ResponeMessage.getSucce;
+        HttpStatus status = HttpStatus.OK;
+
+        AccountModel account = null;
+
+        try{
+            String token = authorizationHeader.replace("Bearer ", "");
+
+            account = accounService.verifyToken(token);
+
+        }
+        catch (Exception e)
+        {
+            mess = e.getMessage();
+            status = HttpStatus.UNAUTHORIZED;
+        }
+
+        return new ResponseEntity<>(new Px4Response(mess, account), status);
+    }
+
     @PostMapping("/reset") // For reset Password
     public ResponseEntity<Px4Response> sendReset(@RequestBody ResetParams resetParams)
     {

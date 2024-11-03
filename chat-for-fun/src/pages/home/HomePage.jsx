@@ -9,12 +9,13 @@ import {
     TeamOutlined,
     UserOutlined,
     IeOutlined,
-    WindowsOutlined
+    WindowsOutlined, CloseCircleOutlined
 } from '@ant-design/icons';
 import { ThemeContext } from '../../ThemeContext';
 import ThemeManager from "../../ThemeManager";
-import {Breadcrumb, Button, Layout, Menu, theme} from 'antd';
+import {Breadcrumb, Button, Layout, Menu, Modal} from 'antd';
 import themeManager from "../../ThemeManager";
+import axios from "axios";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -51,6 +52,7 @@ const items2 = [
     // getItem('Files', '9', <FileOutlined />),
 ];
 
+const SERVER = process.env.REACT_APP_SERVER || 'http://localhost:8080/api/v1';
 
 const HomePage = () =>{
 
@@ -58,11 +60,59 @@ const HomePage = () =>{
     const [bodyComponent,setBodyComponent] = useState(<ChatComponent />);
     const { currentTheme, changeTheme } = useContext(ThemeContext);
     const [selectedTheme, setSelectedTheme] = useState(currentTheme.getKey); // Quản lý các key được chọn
+    const [selectedMenu, setSelectedMenu] = useState("chats"); // Quản lý các key được chọn
 
     const sliderColor = currentTheme.getKey().split("_")[1];
     const background = currentTheme.getBackground();
+    const [open, setOpen] = useState(false);
+    const [confirmLoading, setConfirmLoading] = useState(false);
+    const [modalText, setModalText] = useState('Content of the modal');
+    const showModal = () => {
+        setOpen(true);
+    };
+    const handleOk = () => {
+        setModalText('Please wait!!');
+        setConfirmLoading(true);
+        setTimeout(async() => {
+            await logOutAction()
+            setOpen(false);
+            setConfirmLoading(false);
+        }, 1000);
+    };
+    const handleCancel = () => {
+        setOpen(false);
+    };
+
+    const logOutAction = async()=>{
+        const url=`${SERVER}/account/logout`;
+        const token = localStorage.getItem('token-auth') || '';
+        localStorage.setItem('token-auth', '');
+        await axios({
+            url: url,
+            method: "post",
+            headers:{
+                authorization: `Bearer ${token}`,
+                // "Content-Type": "application/json",
+            },
+
+        })
+            .then((response) => {
+                console.log(response)
+                var code = response.status;
+                if(code === 200)
+                {
+                    window.location.replace("/login")
+                }
+                else{
+                }
+            })
+            .catch((error) => {
+
+            })
+    }
+
     const handleClick = ({key}) =>{
-        console.log(key)
+        if(key !== "logout") setSelectedMenu(key)
         switch (key)
         {
             case "chats":
@@ -73,6 +123,8 @@ const HomePage = () =>{
                 break
 
             case "logout":
+                showModal()
+
                 break
 
             case "groups":
@@ -101,6 +153,15 @@ const HomePage = () =>{
                       rel="stylesheet"
                       type="text/css" />
             </Helmet>
+            <Modal
+                title="Log Out"
+                open={open}
+                onOk={handleOk}
+                confirmLoading={confirmLoading}
+                onCancel={handleCancel}
+            >
+                <p>Do you want to logout?</p>
+            </Modal>
             <Layout style={{ minHeight: '100vh', }}>
 
                 <Sider style={{ padding: "30px 0",}}
@@ -109,9 +170,11 @@ const HomePage = () =>{
 
                     <div className="demo-logo-vertical" />
 
-                    <Menu style={{height: "50%", }}
+                    <Menu
+                        selectedKeys={selectedMenu}
+                            style={{height: "50%", }}
                           theme={sliderColor}
-                          onClick={handleClick}  defaultSelectedKeys={['chats']} mode="inline" items={items}/>
+                          onClick={handleClick}   mode="inline" items={items}/>
 
                     <Menu
                         selectedKeys={selectedTheme}

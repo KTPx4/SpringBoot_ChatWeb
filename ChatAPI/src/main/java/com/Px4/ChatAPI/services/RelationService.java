@@ -64,28 +64,36 @@ public class RelationService {
     {
         String id = jwtRequestFilter.getIdfromJWT();
         FriendDetail friendDetail = null;
-        Optional<FriendModel> friend = friendRepository.findByAccountIDAndFriendID(id, idFriend);
+        try{
 
-        if(friend.isPresent())
-        {
-            FriendModel friendModel = friend.get();
-            Optional<AccountModel> acc = accountRepository.findById(friendModel.getFriendID());
-
-            if(acc.isPresent())
+            boolean canChat = canChat(id, idFriend);
+            if(canChat)
             {
-                AccountModel account = acc.get();
-
-                GroupModel gr = initGroup(id, idFriend);
+                FriendModel friendModel = friendRepository.findByAccountIDAndFriendID(id, idFriend).get();
+                AccountModel account = accountRepository.findById(idFriend).get();
 
                 friendDetail = new FriendDetail(
                         account.getId(), account.getName(),
                         account.getUserProfile(), account.getImage(),
                         friendModel.getStatus(), Px4Generate.toHCMtime(friendModel.getCreatedAt()),
                         friendModel.getType(),
-                        friendModel.getIsFriend());
+                        friendModel.getIsFriend()
+                );
             }
-
         }
+        catch (Exception e)
+        {
+            return null;
+        }
+//        if(friend.isPresent())
+//        {
+//            FriendModel friendModel = friend.get();
+//            String friendID = friendModel.getFriendID();
+
+
+
+
+//        }
 
         return friendDetail;
     }

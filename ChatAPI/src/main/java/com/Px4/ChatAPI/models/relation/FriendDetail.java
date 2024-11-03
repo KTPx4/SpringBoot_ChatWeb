@@ -1,7 +1,10 @@
 package com.Px4.ChatAPI.models.relation;
 
+import com.Px4.ChatAPI.models.message.MessageModel;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 public class FriendDetail {
     @Getter
@@ -15,7 +18,7 @@ public class FriendDetail {
     private String userProfile;
     @Getter
     @Setter
-    private String image;
+    private String avatar;
 
     @Getter
     @Setter
@@ -30,14 +33,18 @@ public class FriendDetail {
     @Setter
     private boolean isFriend;
 
+    @Getter
+    @Setter
+    private List<MessageModel> listMessage;
+
     public FriendDetail() {
     }
 
-    public FriendDetail(String id, String name, String userProfile, String image, String status, String createdAt, String type, boolean isFriend) {
+    public FriendDetail(String id, String name, String userProfile, String avatar, String status, String createdAt, String type, boolean isFriend) {
         this.id = id;
         this.name = name;
         this.userProfile = userProfile;
-        this.image = image;
+        this.avatar = avatar;
         this.status = status;
         this.createdAt = createdAt;
         this.type = type;

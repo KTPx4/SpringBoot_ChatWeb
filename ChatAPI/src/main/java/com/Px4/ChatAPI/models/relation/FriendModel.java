@@ -51,7 +51,7 @@ public class FriendModel{
         this.isFriend = false;
         this.Type = "non";
     }
-
+    public FriendModel(){}
     @Override
     public String toString() {
         return "FriendModel{" +
