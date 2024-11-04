@@ -180,18 +180,18 @@ public class AccountService {
         return newToken;
     }
 
-    public boolean sendReset(String id) throws Exception
+    public boolean sendReset(String username) throws Exception
     {
 
-        Optional<AccountModel> acc = getAccountById(id);
+        Optional<AccountModel> acc = getAccountByUsername(username);
 
         if(acc.isEmpty()) throw new Exception("reset-User not found");
-        if(resetRepository.existsByUserId(id)) throw new Exception("reset-An email has been sent. Please check your inbox!");
+        if(resetRepository.existsByUserId(acc.get().getId())) throw new Exception("reset-An email has been sent. Please check your inbox!");
 
         String token = generateToken();
         String newPass = generateChar(7);
         String email = acc.get().getEmail();
-        ResetModel resetAcc = new ResetModel(id, token, newPass);
+        ResetModel resetAcc = new ResetModel(acc.get().getId(), token, newPass);
 
         resetRepository.save(resetAcc);
 

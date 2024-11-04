@@ -78,7 +78,7 @@ public class BodySend {
                         </div>
                         <div class="content">
                             <p>Xin chào bạn,</p>
-                            <p>Mật khẩu mới của bạn là: <h4>%s</h4></p>
+                            <p>Mật khẩu mới của bạn là: <b>%s</b></p>
                             <p>Để xác nhận mật khẩu mới, vui lòng nhấp vào đường dẫn <a href="%s">Tại đây</a> để đặt lại mật khẩu của bạn.</p>
                             <p>Liên kết sẽ hết hạn sau <b>5 phút</b></p>
                             </br>

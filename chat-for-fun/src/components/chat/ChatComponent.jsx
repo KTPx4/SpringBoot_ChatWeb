@@ -148,12 +148,6 @@ const ChatComponent = () =>{
                 </Header>
 
                 <Content style={{
-                    /* display: flex;
-                        flex-direction: column;
-                        justify-content: flex-end;
-                        padding: 20px;
-                        overflow-y: auto;
-                    * */
                     display: "flex",
                     flexDirection: selectedCard? "column":"column-reverse",
                     justifyContent: "flex-end",
@@ -161,6 +155,7 @@ const ChatComponent = () =>{
                     overflowY: "auto",
 
                 }}>
+
                     {!selectedCard ?
                         <Result
                             className={`wait-conversation ${themeName}`}
