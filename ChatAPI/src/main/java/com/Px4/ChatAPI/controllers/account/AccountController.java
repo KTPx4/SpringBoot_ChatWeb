@@ -76,13 +76,14 @@ public class AccountController {
     @PostMapping("/reset") // For reset Password
     public ResponseEntity<Px4Response> sendReset(@RequestBody ResetParams resetParams)
     {
-        String id = resetParams.getId();
-      //  System.out.println(id);
+        String username = resetParams.getUsername();
+
         String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
         try{
             // handle for get email by id and generate token to send
-            accounService.sendReset(id);
+            if(username == null || username.isEmpty()) throw new Exception("reset-username must have not null or empty");
+            accounService.sendReset(username);
         }
         catch (Exception e)
         {
@@ -90,12 +91,11 @@ public class AccountController {
             String fail = "Reset password failed. Try Again!";
             if(e.getMessage().toLowerCase().startsWith("reset"))
             {
-                String eMess = e.getMessage().split("-")[1]; // get exception message
-                mess =  fail +": "+ eMess ;
+                mess = e.getMessage().split("-")[1]; // get exception message
                 status = HttpStatus.BAD_REQUEST;
             }
         }
-        return new ResponseEntity<>(new Px4Response(mess , id), status);
+        return new ResponseEntity<>(new Px4Response(mess , username), status);
 
     }
 

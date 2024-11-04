@@ -1,5 +1,5 @@
 ## API Description
-
+- Environment variable: GG_CLIENT_ID=xxxx;GG_CLIENT_SECRET=xxxx;GG_REFRESH_TOKEN=xxxx;GG_FROM_EMAIL=xxxx;
 ### Account
 
 - **Register Account**

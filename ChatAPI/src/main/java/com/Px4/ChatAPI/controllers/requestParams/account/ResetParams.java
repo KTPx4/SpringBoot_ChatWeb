@@ -1,13 +1,15 @@
 package com.Px4.ChatAPI.controllers.requestParams.account;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class ResetParams {
-    private String id;
-
-    public String getId() {
-        return id;
+    @Getter
+    @Setter
+    private String username;
+    public ResetParams(String username) {
+        this.username = username;
     }
+    public ResetParams() {}
 
-    public void setId(String id) {
-        this.id = id;
-    }
 }

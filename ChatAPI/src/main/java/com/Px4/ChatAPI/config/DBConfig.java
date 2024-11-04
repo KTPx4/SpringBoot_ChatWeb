@@ -26,10 +26,19 @@ public class DBConfig {
     @Value("${spring.datasource.dbname}")
     private String dbName;
 
+    @Value("${spring.datasource.dbuser}")
+    private String dbUser;
+    @Value("${spring.datasource.dbpass}")
+    private String dbPass;
+
 
     @Bean
     public MongoTemplate mongoTemplate() {
-        String connectionString = String.format("mongodb://%s:%s", dbHost, dbPort);
+//        String connectionString = String.format("mongodb://%s:%s", dbHost, dbPort); // connect to local db
+
+        String connectionString = String.format("mongodb+srv://%s:%s@dbfinal.th4yvbk.mongodb.net/?retryWrites=true&w=majority&appName=DbFinal", dbUser, dbPass); // connect to cloud db
+
+
         MongoTemplate mongoTemplate =new MongoTemplate(MongoClients.create(connectionString), dbName);
 
         // Config auto delete for black list jwt
