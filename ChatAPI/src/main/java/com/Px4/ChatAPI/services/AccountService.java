@@ -1,8 +1,10 @@
 package com.Px4.ChatAPI.services;
 
+import com.Px4.ChatAPI.config.ResponeMessage;
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
 import com.Px4.ChatAPI.controllers.requestParams.account.RegisterParams;
+import com.Px4.ChatAPI.controllers.requestParams.account.UpdateParams;
 import com.Px4.ChatAPI.models.Px4Generate;
 import com.Px4.ChatAPI.models.jwt.BlackListModel;
 import com.Px4.ChatAPI.models.jwt.BlackListRepository;
@@ -10,17 +12,24 @@ import com.Px4.ChatAPI.models.account.*;
 import com.Px4.ChatAPI.models.gmail.BodySend;
 import com.Px4.ChatAPI.services.gmail.SendMailService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 public class AccountService {
-
+    private final MongoTemplate mongoTemplate;
+    private final JwtRequestFilter jwtRequestFilter;
     @Value( "${spring.application.host}")
     private String HOST;
 
@@ -31,6 +40,18 @@ public class AccountService {
     private String PROTOCOL;
     @Value( "${spring.application.apiversion}")
     private String VERSION;
+    // Định nghĩa pattern để kiểm tra email
+    private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+
+    private static final Pattern pattern = Pattern.compile(EMAIL_PATTERN);
+
+    // Hàm kiểm tra tính hợp lệ của email
+    public static boolean isValidEmail(String email) {
+        if (email == null) {
+            return false;
+        }
+        return pattern.matcher(email).matches();
+    }
 
     private final BlackListRepository blackListRepository;
     private final ResetRepository resetRepository;
@@ -42,14 +63,15 @@ public class AccountService {
     private SendMailService sendMailService;
 
     @Autowired
-    public AccountService(BlackListRepository blackListRepository, ResetRepository resetRepository, AccountRepository accountRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, SendMailService sendMailService) {
+    public AccountService(BlackListRepository blackListRepository, ResetRepository resetRepository, AccountRepository accountRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, SendMailService sendMailService, @Qualifier("mongoTemplate") MongoTemplate mongoTemplate, @Lazy JwtRequestFilter jwtRequestFilter) {
         this.blackListRepository = blackListRepository;
         this.resetRepository = resetRepository;
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.sendMailService = sendMailService;
-
+        this.mongoTemplate = mongoTemplate;
+        this.jwtRequestFilter = jwtRequestFilter;
     }
 
 
@@ -116,30 +138,42 @@ public class AccountService {
     }
 
     // Lấy tài khoản theo ID
-    public Optional<AccountModel> getAccountById(String id) {
+    public Optional<AccountModel> getAccountById(String id) throws Exception {
+
         return accountRepository.findById(id);
     }
 
     // Cập nhật thông tin tài khoản
-    public AccountModel updateAccount(String id, AccountModel accountDetails) {
-        Optional<AccountModel> accountOptional = accountRepository.findById(id);
+    public AccountModel updateAccount(String id, UpdateParams updateAccount) throws Exception{
+        Optional<AccountModel> acc = accountRepository.findById(id);
+        String idUser = jwtRequestFilter.getIdfromJWT();
+        if(acc.isEmpty()) throw new Exception(ResponeMessage.userNotfound);
 
-        if (accountOptional.isPresent()) {
-            AccountModel account = accountOptional.get();
+        AccountModel account = acc.get();
 
-            account.setName(accountDetails.getName());
-            account.setUsername(accountDetails.getUsername());
-            account.setPassword(accountDetails.getPassword());
-            account.setImage(accountDetails.getImage());
-            account.setEmail(accountDetails.getEmail());
-            account.setRole(accountDetails.getRole());
-            account.setStatus(accountDetails.getStatus());
-            account.setUserProfile(accountDetails.getUserProfile());
-
-            return accountRepository.save(account);
-        } else {
-            throw new RuntimeException("Account not found with id: " + id);
+        if (updateAccount.getName() != null) {
+            account.setName(updateAccount.getName());
         }
+        if (updateAccount.getEmail() != null) {
+            if(!isValidEmail(updateAccount.getEmail())) throw new Exception(ResponeMessage.invalidEmail);
+
+            account.setEmail(updateAccount.getEmail());
+        }
+        if (updateAccount.getAvatar() != null) {
+            account.setImage(updateAccount.getAvatar());
+        }
+        if(updateAccount.getUserProfile() != null)
+        {
+            Query query = new Query();
+            query.addCriteria(Criteria.where("UserProfile").is(updateAccount.getUserProfile()))
+                    .addCriteria(Criteria.where("_id").ne(idUser));
+            AccountModel nacc = mongoTemplate.findOne(query, AccountModel.class);
+            if(nacc != null) throw new Exception("User profile isExists");
+            account.setUserProfile(updateAccount.getUserProfile());
+        }
+
+
+        return accountRepository.save(account);
     }
 
     // Xóa tài khoản theo ID
@@ -172,7 +206,8 @@ public class AccountService {
 
         AccountModel accUpdate = acc.get();
         accUpdate.setPassword(passwordEncoder.encode(newPassword));
-        updateAccount(idUser, accUpdate);
+
+        accountRepository.save(accUpdate);
 
         logOut(token); // add curren jwt token to black list
         String newToken = jwtUtil.generateToken(idUser);
@@ -219,7 +254,8 @@ public class AccountService {
         // Update new Password
         AccountModel accUpdate = acc.get();
         accUpdate.setPassword(passwordEncoder.encode(reset.getNewPassword()));
-        updateAccount(idUser, accUpdate);
+
+        accountRepository.save(accUpdate);
 
         return true;
     }

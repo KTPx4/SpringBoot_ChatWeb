@@ -1,4 +1,4 @@
-package com.Px4.ChatAPI.models.message;
+package com.Px4.ChatAPI.controllers.requestParams.chat;
 
 
 import lombok.Getter;

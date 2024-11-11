@@ -21,7 +21,7 @@ public class AccountModel {
     @Setter
     private String email;
     @Setter
-    private String image ="/";
+    private String image ="https://api.dicebear.com/9.x/icons/svg?seed=Jude";
     @Setter
     private String status = "normal";
     @Setter

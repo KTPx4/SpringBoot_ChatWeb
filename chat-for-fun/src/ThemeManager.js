@@ -8,6 +8,7 @@ const themes = {
         cardSelected: "rgb(248,216,251)",
         content: 'linear-gradient(rgba(254, 238, 255), rgb(255, 255, 255))',
         navContent: '#ffffff',
+        border: '#e8e8e8'
     },
     theme_dark: {
         key: 'theme_dark',
@@ -18,6 +19,8 @@ const themes = {
         cardSelected: '#144272',
         content: 'linear-gradient(rgb(2 18 33),  #4C516D)',
         navContent: '#001529',
+        border: '#4C516D'
+
     },
 
 };
@@ -38,6 +41,7 @@ const themeManager = {
     getContent: () => getCurrentTheme().content,
     getText: () => getCurrentTheme().textColor,
     getNavContent: () => getCurrentTheme().navContent,
+    getBorder: ()=> getCurrentTheme().border,
     setTheme: (newTheme) => {
         if (themes[newTheme]) {
             localStorage.setItem('app_theme', newTheme);

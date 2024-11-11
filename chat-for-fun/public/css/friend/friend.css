@@ -1,0 +1,96 @@
+
+.ant-layout-sider-dark {
+    background: transparent !important;
+    border: none;
+
+    /*background: linear-gradient(rgb(2, 18, 33), rgb(60, 74, 88)) !important;*/
+}
+.ant-layout-sider-light {
+    background: transparent !important;
+    border: none;
+
+}
+
+
+/* Đảm bảo các thành phần bên trong có nền trong suốt để gradient áp dụng từ cha */
+.ant-layout-sider-dark .ant-layout-sider-children,
+.ant-layout-sider-dark .ant-layout-sider-trigger {
+    background: transparent !important;
+}
+
+/* Đặt nền menu trong suốt để hiển thị gradient từ cha */
+.ant-layout-sider-dark .ant-menu {
+    background: transparent !important;
+}
+.ant-layout-sider-dark .ant-list {
+    background: transparent !important;
+}
+
+
+.ant-layout-sider-light .ant-layout-sider-children,
+.ant-layout-sider-light .ant-layout-sider-trigger {
+    background: transparent !important;
+}
+
+/* Đặt nền menu trong suốt để hiển thị gradient từ cha */
+.ant-layout-sider-light .ant-menu {
+    background: transparent !important;
+}
+.ant-layout-sider-light .ant-list {
+    background: transparent !important;
+}
+
+
+
+
+.body{
+    height: 75%;
+    width: 100%;
+}
+.body .body-left{
+    width: 175px;
+    height: 100%;
+
+
+}
+::-webkit-scrollbar , .content::-webkit-scrollbar,  .ant-list::-webkit-scrollbar{
+    background: transparent !important;
+    width: 3px; /* Chiều rộng thanh cuộn */
+
+}
+
+::-webkit-scrollbar , .content::-webkit-scrollbar-thumb, .ant-list::-webkit-scrollbar-thumb {
+    background: #a6a4a4; /* Màu của phần cuộn */
+    border-radius: 10px; /* Bo góc thanh cuộn */
+}
+
+.body .body-right{
+    width: 70%;
+    height: 100%;
+}
+.ant-card-body{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.body-left ul{
+    border: none !important;
+}
+.list-suggest ul{
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+.card-suggest .ant-card-body{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .ant-card-meta{
+        width: 100%;
+    }
+}
+.suggest-btn-add:hover{
+    border: 1px solid #2f99f0 !important;
+}

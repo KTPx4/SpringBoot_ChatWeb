@@ -2,6 +2,7 @@ package com.Px4.ChatAPI.controllers.account;
 
 
 import com.Px4.ChatAPI.config.ResponeMessage;
+import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
 import com.Px4.ChatAPI.controllers.requestParams.account.*;
 import com.Px4.ChatAPI.models.Px4Response;
@@ -42,6 +43,8 @@ public class AccountController {
 
     @Autowired
     private HttpServletResponse response;
+    @Autowired
+    private JwtRequestFilter jwtRequestFilter;
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
@@ -266,17 +269,23 @@ public class AccountController {
         String mess = ResponeMessage.getSucce;
         HttpStatus status = HttpStatus.OK;
 
-        Optional<AccountModel> account = null;
+        AccountModel account = null;
 
         try{
-
-            account = accounService.getAccountById(id);
+            String userId = jwtRequestFilter.getIdfromJWT();
+            if(!userId.equals(id)) throw new Exception("account-You not permission to access");
+            account = accounService.getAccountById(id).get();
 
         }
         catch (Exception e)
         {
-            mess = e.getMessage();
-            status = HttpStatus.UNAUTHORIZED;
+            mess = "Server error. Try again!";
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+            if(e.getMessage().startsWith("account"))
+            {
+                mess = e.getMessage().split("-")[1];
+                status = HttpStatus.FORBIDDEN;
+            }
         }
 
         return new ResponseEntity<>(new Px4Response(mess, account), status);
@@ -293,7 +302,7 @@ public class AccountController {
         //  String jwtToken = JwtRequestFilter.getJwtToken();
         String mess = ResponeMessage.updateSuccess;
         HttpStatus status = HttpStatus.OK;
-        Optional<AccountModel> acc = null;
+        AccountModel acc = null;
 
         try{
             // Giải mã JWT để lấy thông tin người dùng
@@ -302,26 +311,8 @@ public class AccountController {
             // So sánh ID từ token với ID mà client yêu cầu
             if (id.equals(userIdFromToken)) {
 
-                // Nếu khớp, tiếp tục
-                acc = accounService.getAccountById(id);
-                if(acc.isEmpty()) throw new Exception(ResponeMessage.userNotfound);
 
-                AccountModel account = acc.get();
-
-                if (updateAccount.getName() != null) {
-                    account.setName(updateAccount.getName());
-                }
-                if (updateAccount.getEmail() != null) {
-                    if(!isValidEmail(updateAccount.getEmail())) throw new Exception(ResponeMessage.invalidEmail);
-
-                    account.setEmail(updateAccount.getEmail());
-                }
-                if (updateAccount.getAvatar() != null) {
-                    account.setImage(updateAccount.getAvatar());
-                }
-                if(updateAccount.getUserProfile() != null) account.setUserProfile(updateAccount.getUserProfile());
-
-                accounService.updateAccount(id, account);
+               acc = accounService.updateAccount(id, updateAccount);
             }
             else{
                 mess = ResponeMessage.Forbidden;
@@ -331,11 +322,12 @@ public class AccountController {
         }
         catch (Exception e)
         {
+//            e.printStackTrace();
             mess = e.getMessage();
             status = HttpStatus.UNAUTHORIZED;
         }
 
-        return new ResponseEntity<>(new Px4Response(mess, updateAccount), status);
+        return new ResponseEntity<>(new Px4Response(mess, acc), status);
     }
 
 

@@ -48,9 +48,12 @@
     width: fit-content;
     background: #2f99f0;
     padding: 10px;
-    border-radius: 20px;
+    border-radius: 15px;
     color: white;
 
+}
+.message-border {
+    border-top: 1px solid #e8e8e8;
 }
 .message .ant-image{
     width: fit-content !important;
@@ -66,22 +69,52 @@
     }
 }
 
-.ant-layout-content .message{
-    display: flex;
-}
 
 .ant-layout-content .message-me{
+    display: flex;
     justify-content: flex-end;
     p{
         background: #2f99f0;
+        display: flex;
+        max-width: 300px !important;
+        line-break: anywhere;
     }
 }
+
+.ant-layout-content .message-me{
+    display: flex;
+    justify-content: flex-end;
+    p{
+        background: #2f99f0;
+        display: flex;
+        max-width: 300px !important;
+        line-break: anywhere;
+    }
+}
+
+.ant-layout-content .message-wait{
+    display: flex;
+    justify-content: flex-end;
+    p{
+        background: rgba(141, 150, 158, 0.64) !important;
+        display: flex;
+        max-width: 300px !important;
+        line-break: anywhere;
+    }
+}
+
 .ant-layout-content .message-friend{
+    display: flex;
+    /*justify-content: flex-end;*/
     justify-content: flex-start;
     p{
         background: rgba(118, 132, 145, 0.93);
+        display: flex;
+        max-width: 300px !important;
+        line-break: anywhere;
     }
 }
+
 .btn-call:hover, .btn-more:hover{
     color: #2f99f0 !important;
 }

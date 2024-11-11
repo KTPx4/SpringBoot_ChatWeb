@@ -6,6 +6,6 @@ import java.util.Optional;
 
 public interface AccountRepository extends MongoRepository<AccountModel, String> {
     Optional<AccountModel> findByUsername(String username);
-
+    Optional<AccountModel> findByUserProfile(String userProfile);
 
 }

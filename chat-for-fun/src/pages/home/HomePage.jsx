@@ -1,4 +1,4 @@
-import React, {useEffect, useState,useContext} from "react";
+import React, {useEffect, useState, useContext, useMemo} from "react";
 import ProfileComponent from "../../components/account/ProfileComponent";
 import ChatComponent from "../../components/chat/ChatComponent";
 import {Helmet, HelmetProvider} from "react-helmet-async";
@@ -13,9 +13,13 @@ import {
 } from '@ant-design/icons';
 import { ThemeContext } from '../../ThemeContext';
 import ThemeManager from "../../ThemeManager";
-import {Breadcrumb, Button, Layout, Menu, Modal} from 'antd';
+import {Avatar, Breadcrumb, Button, Layout, Menu, Modal, Spin} from 'antd';
 import themeManager from "../../ThemeManager";
 import axios from "axios";
+import FriendComponent from "../../components/friend/FriendComponent";
+import useStore from "../../store/useStore";
+import WebSocketHandler from "../../components/chat/WebSocketHandler";
+import {useParams} from "react-router-dom";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -54,19 +58,57 @@ const items2 = [
 
 const SERVER = process.env.REACT_APP_SERVER || 'http://localhost:8080/api/v1';
 
-const HomePage = () =>{
-
+const HomePage = ({openNotification})  =>{
+    const {myAccount} = useStore()
     const [collapsed, setCollapsed] = useState(false);
-    const [bodyComponent,setBodyComponent] = useState(<ChatComponent />);
     const { currentTheme, changeTheme } = useContext(ThemeContext);
     const [selectedTheme, setSelectedTheme] = useState(currentTheme.getKey); // Quản lý các key được chọn
     const [selectedMenu, setSelectedMenu] = useState("chats"); // Quản lý các key được chọn
+    // const [bodyComponent,setBodyComponent] = useState(<ChatComponent />);
+    const [bodyComponent,setBodyComponent] = useState(null);
 
     const sliderColor = currentTheme.getKey().split("_")[1];
     const background = currentTheme.getBackground();
+    const contentColor = currentTheme.getContent()
+
     const [open, setOpen] = useState(false);
     const [confirmLoading, setConfirmLoading] = useState(false);
     const [modalText, setModalText] = useState('Content of the modal');
+    const [avt, setAvt] =useState(myAccount?.image)
+
+    const [webSocketHandler, setWebSocketHandler] = useState(null);
+    const { id } = useParams(); // Lấy giá trị id từ URL
+
+
+
+
+    useEffect(() => {
+        const token = localStorage.getItem('token-auth');
+        const socketHandler = new WebSocketHandler(token);
+
+        socketHandler.connect();
+        setWebSocketHandler(socketHandler);
+        // return () => { socketHandler.disconnect(); };
+    }, []);
+// Sử dụng useMemo để khởi tạo các component chỉ một lần
+
+
+    useEffect(() => {
+        if(webSocketHandler)
+        {
+            if(id)
+            {
+                console.log("run time")
+                setSelectedMenu("friends")
+                setBodyComponent(<FriendComponent userId={id} socketHandler={webSocketHandler}/>)
+            }
+            else
+            {
+                setBodyComponent(<ChatComponent socketHandler={webSocketHandler} />)
+            }
+        }
+    }, [webSocketHandler])
+
     const showModal = () => {
         setOpen(true);
     };
@@ -92,7 +134,8 @@ const HomePage = () =>{
             method: "post",
             headers:{
                 authorization: `Bearer ${token}`,
-                // "Content-Type": "application/json",
+                // "Content-Type": "ap
+                // plication/json",
             },
 
         })
@@ -110,16 +153,20 @@ const HomePage = () =>{
 
             })
     }
-
+    const changeAvt = (link) =>{
+        if(link) setAvt(link)
+    }
     const handleClick = ({key}) =>{
         if(key !== "logout") setSelectedMenu(key)
+        window.history.pushState({},null, "/" )
         switch (key)
         {
             case "chats":
-                setBodyComponent(<ChatComponent />)
+                setBodyComponent(<ChatComponent socketHandler={webSocketHandler} />)
                 break
 
             case "settings":
+                setBodyComponent(<ProfileComponent openNotification={openNotification} changeAvt={changeAvt}/>)
                 break
 
             case "logout":
@@ -131,7 +178,8 @@ const HomePage = () =>{
                 break
 
             case "friends":
-                break
+                setBodyComponent(<FriendComponent userId={id} socketHandler={webSocketHandler}/>)
+                    break
 
             case "threads":
                 break
@@ -162,13 +210,16 @@ const HomePage = () =>{
             >
                 <p>Do you want to logout?</p>
             </Modal>
-            <Layout style={{ minHeight: '100vh', }}>
-
-                <Sider style={{ padding: "30px 0",}}
+            <Layout   style={{ minHeight: '100vh', background: contentColor, overflowX: "auto" }}>
+                <Sider style={{ padding: "30px 0", }}
                        theme={sliderColor}
                        collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
 
-                    <div className="demo-logo-vertical" />
+                    {/*<div className="demo-logo-vertical" />*/}
+                    <div style={{ display: "flex", flexDirection:"column", width: "100%", alignItems: "center"}}>
+                        { avt ? <Avatar size={50} src={avt} onError={()=> setAvt("")}/> : <Spin /> }
+
+                    </div>
 
                     <Menu
                         selectedKeys={selectedMenu}
@@ -179,8 +230,8 @@ const HomePage = () =>{
                     <Menu
                         selectedKeys={selectedTheme}
                         style={{
-                            paddingBottom: 20,
-                            height: "50%",
+
+                            height: "40%",
                             display: "flex",
                             flexDirection: "column",
                             justifyContent: "flex-end",

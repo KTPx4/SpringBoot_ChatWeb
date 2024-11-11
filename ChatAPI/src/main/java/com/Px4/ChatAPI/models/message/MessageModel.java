@@ -38,6 +38,9 @@ public class MessageModel {
     @Getter
     @Setter
     private boolean isDeleted;
+    @Getter
+    @Setter
+    private boolean isSeen;
 
     public MessageModel(String idConversation, String sender, String contentType, String content)
     {
@@ -48,11 +51,14 @@ public class MessageModel {
         this.reply = "";
         this.createdAt = Date.from(Instant.now());
         this.isSystem = false;
+        this.isSeen = false;
         this.isDeleted = false;
     }
     public MessageModel()
     {
-
+        this.isSystem = false;
+        this.isDeleted = false;
+        this.isSeen = false;
     }
 
     public MessageModel(String idConversation, String sender,String reply, String contentType, String content)
@@ -65,6 +71,8 @@ public class MessageModel {
         this.createdAt = Date.from(Instant.now());
         this.isSystem = false;
         this.isDeleted = false;
+        this.isSeen = false;
+
     }
 
 }

@@ -2,6 +2,7 @@ package com.Px4.ChatAPI.config;
 
 import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
 import com.Px4.ChatAPI.controllers.socket.JwtAuthenticationException;
+import com.Px4.ChatAPI.models.jwt.BlackListRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
@@ -26,6 +27,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtUtil jwtUtil;
 
+    private BlackListRepository blackListRepository;
 
 
     private final UserDetailsService userDetailsService;
@@ -33,8 +35,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
 
     @Autowired
-    public WebSocketConfig(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+    public WebSocketConfig(JwtUtil jwtUtil, BlackListRepository blackListRepository, UserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
+        this.blackListRepository = blackListRepository;
         this.userDetailsService = userDetailsService;
 
     }
@@ -72,6 +75,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         }
 
                         token = token.substring(7);
+                        if(blackListRepository.existsByToken(token)) throw new JwtAuthenticationException(ResponeMessage.jwtDeleted); // Check black list of token
                         String id = jwtUtil.extractID(token);
 
                         if (id != null) {

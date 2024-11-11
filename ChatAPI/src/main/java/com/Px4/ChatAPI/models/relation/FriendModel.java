@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.Instant;
 import java.util.Date;
@@ -35,6 +36,7 @@ public class FriendModel{
 
     @Setter
     @Getter
+    @Field("Type")
     private String Type; // non - waiting response - response waiting
 
     public static String typeNon = "non";

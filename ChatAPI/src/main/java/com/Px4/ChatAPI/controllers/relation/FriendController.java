@@ -1,6 +1,9 @@
 package com.Px4.ChatAPI.controllers.relation;
 
 import com.Px4.ChatAPI.config.ResponeMessage;
+import com.Px4.ChatAPI.controllers.requestParams.relation.FriendItem;
+import com.Px4.ChatAPI.controllers.requestParams.relation.ResponseFriends;
+import com.Px4.ChatAPI.controllers.requestParams.relation.ResponseSuggest;
 import com.Px4.ChatAPI.models.Px4Response;
 import com.Px4.ChatAPI.models.relation.FriendDetail;
 import com.Px4.ChatAPI.services.RelationService;
@@ -15,16 +18,16 @@ import java.util.List;
 @RequestMapping("/api/v1/friend")
 public class FriendController {
     @Autowired
-    private RelationService relationService;
+    private RelationService relationService ;
 
     @GetMapping() // get list friend
     public ResponseEntity<Px4Response> getFriendList(){
         String mess = ResponeMessage.getSucce;
         HttpStatus status = HttpStatus.OK;
-        List<FriendDetail> listFriend = null;
+        ResponseFriends res = null;
         try{
 
-           listFriend = relationService.getAllFriends();
+           res = relationService.getAllFriends();
 
         }
         catch(Exception e)
@@ -38,7 +41,55 @@ public class FriendController {
             }
         }
         // handle for send make friend - accept make fiend  + set isFriend = true
-        return new ResponseEntity<>(new Px4Response<>(mess, listFriend), status);
+        return new ResponseEntity<>(new Px4Response<>(mess, res), status);
+    }
+    @GetMapping("/request/all")
+    public ResponseEntity<Px4Response> getAllRequest(){
+        String mess = ResponeMessage.makeFriendRequest;
+        HttpStatus status = HttpStatus.OK;
+        ResponseFriends res = null;
+        try{
+
+            res = relationService.getAllRequest();
+
+        }
+        catch(Exception e)
+        {
+            mess = ResponeMessage.SystemError;
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+            if(e.getMessage().startsWith("friend"))
+            {
+                mess = e.getMessage().split("-")[1];
+                status = HttpStatus.BAD_REQUEST;
+            }
+        }
+        // handle for send make friend - accept make fiend  + set isFriend = true
+        return new ResponseEntity<>(new Px4Response<>(mess, res), status);
+    }
+    @GetMapping("/suggest/all")
+    public ResponseEntity<Px4Response> getAllSuggest(@RequestParam(value = "page" , defaultValue = "1") int page)
+    {
+        String mess = ResponeMessage.makeFriendRequest;
+        HttpStatus status = HttpStatus.OK;
+        ResponseSuggest res = null;
+        try{
+
+            res = relationService.getAllSuggest(page);
+
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+            mess = ResponeMessage.SystemError;
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+            if(e.getMessage().startsWith("friend"))
+            {
+                mess = e.getMessage().split("-")[1];
+                status = HttpStatus.BAD_REQUEST;
+            }
+        }
+        // handle for send make friend - accept make fiend  + set isFriend = true
+        return new ResponseEntity<>(new Px4Response<>(mess, res), status);
     }
 
     @PostMapping("/unfriend/{id}") // unfriend
@@ -46,10 +97,10 @@ public class FriendController {
     {
         String mess = ResponeMessage.makeFriendRequest;
         HttpStatus status = HttpStatus.OK;
-
+        FriendItem friendItem = null;
         try{
 
-            relationService.unFriend(id);
+            friendItem = relationService.unFriend(id);
 
         }
         catch(Exception e)
@@ -63,7 +114,7 @@ public class FriendController {
             }
         }
         // handle for send make friend - accept make fiend  + set isFriend = true
-        return new ResponseEntity<>(new Px4Response<>(mess, null), status);
+        return new ResponseEntity<>(new Px4Response<>(mess, friendItem), status);
     }
 
     @PostMapping("/status/{id}")  // block - unblock this user
@@ -72,9 +123,10 @@ public class FriendController {
 
         String mess = ResponeMessage.makeFriendRequest;
         HttpStatus status = HttpStatus.OK;
+        FriendItem friendDetail = null;
 
         try{
-            relationService.actionStatus(id);
+            friendDetail = relationService.actionStatus(id);
 
         }
         catch(Exception e)
@@ -87,7 +139,7 @@ public class FriendController {
                 status = HttpStatus.BAD_REQUEST;
             }
         }
-        return new ResponseEntity<>(new Px4Response<>(mess, null), status);
+        return new ResponseEntity<>(new Px4Response<>(mess, friendDetail), status);
     }
 
 
@@ -97,7 +149,7 @@ public class FriendController {
         // get info this user
         String mess = ResponeMessage.getSucce;
         HttpStatus status = HttpStatus.OK;
-        FriendDetail friend = null;
+        FriendItem friend = null;
         try{
 
             friend = relationService.getById(id);
@@ -121,10 +173,10 @@ public class FriendController {
     {
         String mess = ResponeMessage.makeFriendRequest;
         HttpStatus status = HttpStatus.OK;
-
+        FriendItem friendDetail = null;
         try{
 
-            relationService.addFriend(id);
+            friendDetail = relationService.addFriend(id);
 
         }
         catch(Exception e)
@@ -138,7 +190,7 @@ public class FriendController {
             }
         }
         // handle for send make friend - accept make fiend  + set isFriend = true
-        return new ResponseEntity<>(new Px4Response<>(mess, null), status);
+        return new ResponseEntity<>(new Px4Response<>(mess, friendDetail), status);
     }
 
 

@@ -6,6 +6,9 @@ public class UpdateParams {
     private String email;
     private String userProfile;
 
+    public UpdateParams() {
+    }
+
     public String getName() {
         return name;
     }

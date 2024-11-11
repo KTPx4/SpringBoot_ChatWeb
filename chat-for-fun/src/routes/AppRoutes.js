@@ -9,6 +9,7 @@ import NotFoundPage from "../pages/notfound/NotFoundPage";
 import {
     notification, message,
 } from "antd";
+import TestPage from "../pages/TestPage";
 const AppRoutes = () =>{
     const [api, contextHolder] = notification.useNotification();
     const [messageApi, contextHolder2] = message.useMessage();
@@ -43,9 +44,11 @@ const AppRoutes = () =>{
             {contextHolder2}
 
             <Routes>
-
+                <Route path="/test" element={<TestPage/>} />
                 <Route path="/" element={<UserRouter><LayoutPage/></UserRouter>} >
-                    <Route index element={<HomePage/>} />
+                    <Route index element={<HomePage openNotification={openNotification} />} />
+                    <Route path="account/:id" element={<HomePage openNotification={openNotification} />} />
+                    <Route path="friend/:id" element={<HomePage openNotification={openNotification} />} />
                 </Route>
 
                 <Route path="/login" element={<LayoutPage/>} >
