@@ -1,6 +1,7 @@
 package com.Px4.ChatAPI.controllers.relation;
 
 import com.Px4.ChatAPI.config.ResponeMessage;
+import com.Px4.ChatAPI.controllers.requestParams.relation.GroupChatItem;
 import com.Px4.ChatAPI.controllers.requestParams.relation.RequestGroup;
 import com.Px4.ChatAPI.controllers.requestParams.relation.ResponseGroup;
 import com.Px4.ChatAPI.models.Px4Response;
@@ -52,7 +53,7 @@ public class GroupController {
     {
         String mess = ResponeMessage.createSuccess;
         HttpStatus status = HttpStatus.OK;
-        ResponseGroup gr = null;
+        GroupChatItem gr = null;
 
         try{
             if(requestGroup.getName() == null) throw new Exception("group-'name' is null");

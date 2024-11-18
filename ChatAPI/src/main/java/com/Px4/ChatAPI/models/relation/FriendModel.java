@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 @Document(collection = "friends")
 public class FriendModel{
@@ -33,6 +34,8 @@ public class FriendModel{
     @Setter
     @Getter
     private Boolean isFriend;
+
+
 
     @Setter
     @Getter

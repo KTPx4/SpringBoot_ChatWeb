@@ -2,32 +2,19 @@ package com.Px4.ChatAPI.services;
 
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.requestParams.relation.*;
-import com.Px4.ChatAPI.models.Px4Generate;
 import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.account.AccountRepository;
 import com.Px4.ChatAPI.models.message.ConversationModel;
 import com.Px4.ChatAPI.models.message.ConversationRepository;
 import com.Px4.ChatAPI.models.message.MessageModel;
+import com.Px4.ChatAPI.models.message.MessageRepository;
 import com.Px4.ChatAPI.models.relation.*;
 import com.Px4.ChatAPI.services.chat.ChatService;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
-import org.springframework.data.mongodb.core.aggregation.LookupOperation;
-import org.springframework.data.mongodb.core.aggregation.MatchOperation;
-import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
-import org.springframework.data.mongodb.core.aggregation.SkipOperation;
-import org.springframework.data.mongodb.core.aggregation.LimitOperation;
-import org.springframework.data.mongodb.core.aggregation.UnwindOperation;
-import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
-import org.springframework.data.mongodb.core.aggregation.AggregationOptions;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -62,9 +49,12 @@ public class RelationService {
     @Autowired
     private GroupSettingRepository groupSettingRepository;
     @Autowired
+    private MessageRepository messageRepository;
+
+    @Autowired
     private MongoTemplate mongoTemplate;
 
-    private int  PAGE_SIZE = 25;
+    private int  PAGE_SIZE = 20;
 
     public RelationService(@Lazy ChatService chatService) {
         this.chatService = chatService;
@@ -182,6 +172,9 @@ public class RelationService {
                     skipAcc = PAGE_SIZE + need + (long) (page - 2) * PAGE_SIZE;
                     limitAcc = PAGE_SIZE + need + (long) (page - 1) * PAGE_SIZE;
                 }
+
+                System.out.println( "listSuggest.size(): " +listSuggest.size()+" skip " + skipAcc + " - limit:" + limitAcc);
+
                 Aggregation aggregation = newAggregation(
                         // Lookup để ghép bảng `accounts` với bảng `friends`
                         lookup("friends", "_id", "accountID", "friendInfoByAccount"),
@@ -210,8 +203,8 @@ public class RelationService {
 //                        project("_id", "name", "image"),
 
                         // Giới hạn số bản ghi trả về theo kích thước trang
-                        skip(skipAcc),
-                        limit(limitAcc)
+                        limit(limitAcc),
+                        skip(skipAcc)
                 );
 
                 List<AccountModel> listAcc = mongoTemplate.aggregate(aggregation, "accounts", AccountModel.class).getMappedResults();
@@ -327,10 +320,10 @@ public class RelationService {
         FriendItem friendDetail = null;
         try{
 
-            GetRelationShip(userId, friendId);
-            Query query = new Query();
-            query.addCriteria(Criteria.where("accountID").is(userId));
-            FriendModel friendModel = mongoTemplate.findOne(query, FriendModel.class);
+            List<FriendModel> friends =  GetRelationShip(userId, friendId);
+
+            FriendModel friendModel = friends.getFirst();
+
             if(friendModel != null && !friendModel.getStatus().toLowerCase().equals(FriendModel.statusBlockedBy))
             {
                 AccountModel account = accountRepository.findById(friendId).get();
@@ -632,19 +625,17 @@ public class RelationService {
     {
         String userId = jwtRequestFilter.getIdfromJWT();
         System.out.println("user: " +userId);
-        List<GroupModel> groupList = groupRepository.findAll();
-        List<GroupModel> grResponse = new ArrayList<>();
-        for(GroupModel group : groupList)
-        {
-            if(!group.isPvP() && group.getMembers().contains(userId))
-            {
-                grResponse.add(group);
-            }
-        }
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where( "isPvP").is(false)
+                                    .and("members").in(userId));
+
+        List<GroupModel> grResponse = mongoTemplate.find(query, GroupModel.class);
+
         return grResponse;
     }
 
-    public ResponseGroup createGroup(RequestGroup requestGroup) throws Exception
+    public GroupChatItem createGroup(RequestGroup requestGroup) throws Exception
     {
         String userId = jwtRequestFilter.getIdfromJWT();
         List<String> members = requestGroup.getUsers();
@@ -670,9 +661,15 @@ public class RelationService {
 
         ConversationModel cv = new ConversationModel(gr.getId()); // create conversation for group
         cv = conversationRepository.save(cv);
+        MessageModel messCreate = new MessageModel(cv.getId(), "server", "text", "Create group success. Let started chat", true);
+
+        messCreate =  messageRepository.save(messCreate);
+
         System.out.println("Relation Service - createGroup - create conversation");
 
-        ResponseGroup response = new ResponseGroup(gr, grSetting);
-        return response;
+        GroupChatItem grI = new GroupChatItem(gr);
+        grI.addMessage(messCreate);
+
+        return grI;
     }
 }

@@ -21,6 +21,19 @@
 .ant-layout-sider-dark .ant-list {
     background: transparent !important;
 }
+.layout-main .main-sider {
+    border-radius: 25px !important;
+    margin: 2px 3px !important;
+
+}
+.main-sider.ant-layout-sider-light{
+        border: 1px solid rgb(227, 227, 227) !important;
+
+}
+.main-sider.ant-layout-sider-dark{
+        border: 1px solid #696f93 !important;
+}
+
 
 
 .ant-layout-sider-light .ant-layout-sider-children,

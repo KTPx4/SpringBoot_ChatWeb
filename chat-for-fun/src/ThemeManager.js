@@ -19,7 +19,8 @@ const themes = {
         cardSelected: '#144272',
         content: 'linear-gradient(rgb(2 18 33),  #4C516D)',
         navContent: '#001529',
-        border: '#4C516D'
+        border: '#696f93'
+        // border: '#4C516D'
 
     },
 

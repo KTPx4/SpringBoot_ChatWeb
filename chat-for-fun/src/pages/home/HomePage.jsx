@@ -9,7 +9,10 @@ import {
     TeamOutlined,
     UserOutlined,
     IeOutlined,
-    WindowsOutlined, CloseCircleOutlined
+    ApartmentOutlined,
+    OpenAIOutlined,
+    CommentOutlined,
+    WindowsOutlined, QqOutlined, BranchesOutlined
 } from '@ant-design/icons';
 import { ThemeContext } from '../../ThemeContext';
 import ThemeManager from "../../ThemeManager";
@@ -20,6 +23,7 @@ import FriendComponent from "../../components/friend/FriendComponent";
 import useStore from "../../store/useStore";
 import WebSocketHandler from "../../components/chat/WebSocketHandler";
 import {useParams} from "react-router-dom";
+import GroupConponent from "../../components/group/GroupConponent";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -33,16 +37,11 @@ function getItem(label, key, icon, children) {
 }
 
 const items = [
-    getItem('User', 'sub1', <UserOutlined />, [
-        getItem('Settings', 'settings'),
-        getItem('Logout', 'logout'),
-    ]),
-    getItem('Chats', 'chats', <WechatOutlined />),
+    // getItem('User', 'settings', <UserOutlined />),
+    getItem('Chats', 'chats', <CommentOutlined />),
     getItem('Groups', 'groups', <TeamOutlined />),
-    getItem('Social', 'sub2',<IeOutlined />, [
-        getItem('Friends', 'friends'),
-        getItem('Threads', 'threads')
-    ]),
+    getItem('Friends', 'friends', <ApartmentOutlined />),
+    getItem('AI', 'ai', <OpenAIOutlined />)
     // getItem('Files', '9', <FileOutlined />),
 ];
 const items2 = [
@@ -60,7 +59,7 @@ const SERVER = process.env.REACT_APP_SERVER || 'http://localhost:8080/api/v1';
 
 const HomePage = ({openNotification})  =>{
     const {myAccount} = useStore()
-    const [collapsed, setCollapsed] = useState(false);
+    const [collapsed, setCollapsed] = useState(localStorage.getItem('collapsed-main') ?? false);
     const { currentTheme, changeTheme } = useContext(ThemeContext);
     const [selectedTheme, setSelectedTheme] = useState(currentTheme.getKey); // Quản lý các key được chọn
     const [selectedMenu, setSelectedMenu] = useState("chats"); // Quản lý các key được chọn
@@ -156,6 +155,10 @@ const HomePage = ({openNotification})  =>{
     const changeAvt = (link) =>{
         if(link) setAvt(link)
     }
+    const  clickAvt = () =>{
+        setBodyComponent(<ProfileComponent openNotification={openNotification} changeAvt={changeAvt}/>)
+    }
+
     const handleClick = ({key}) =>{
         if(key !== "logout") setSelectedMenu(key)
         window.history.pushState({},null, "/" )
@@ -166,7 +169,6 @@ const HomePage = ({openNotification})  =>{
                 break
 
             case "settings":
-                setBodyComponent(<ProfileComponent openNotification={openNotification} changeAvt={changeAvt}/>)
                 break
 
             case "logout":
@@ -175,13 +177,14 @@ const HomePage = ({openNotification})  =>{
                 break
 
             case "groups":
+                setBodyComponent(<GroupConponent socketHandler={webSocketHandler}/>)
                 break
 
             case "friends":
                 setBodyComponent(<FriendComponent userId={id} socketHandler={webSocketHandler}/>)
                     break
 
-            case "threads":
+            case "ai":
                 break
             case 'theme_light':
                 changeTheme(key);
@@ -210,31 +213,40 @@ const HomePage = ({openNotification})  =>{
             >
                 <p>Do you want to logout?</p>
             </Modal>
-            <Layout   style={{ minHeight: '100vh', background: contentColor, overflowX: "auto" }}>
-                <Sider style={{ padding: "30px 0", }}
+            <Layout className="layout-main"  style={{ minHeight: '100vh', background: contentColor, overflowX: "auto" }}>
+                <Sider className="main-sider" style={{ padding: "30px 0", border: "none !important"}}
                        theme={sliderColor}
-                       collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
 
-                    {/*<div className="demo-logo-vertical" />*/}
-                    <div style={{ display: "flex", flexDirection:"column", width: "100%", alignItems: "center"}}>
-                        { avt ? <Avatar size={50} src={avt} onError={()=> setAvt("")}/> : <Spin /> }
+                       collapsible collapsed={collapsed} onCollapse={(value) => {
+                            localStorage.setItem('collapsed-main', value )
+                           setCollapsed(value)
+                }}>
+
+
+                    <div style={{ marginBottom: 10,display: "flex", flexDirection:"column", width: "100%", alignItems: "center"}}>
+                        { avt ?
+                            <Avatar size={50} src={avt}
+                                    onClick={clickAvt}
+                                    onError={()=> setAvt("")}/>
+                            :
+                            <Spin /> }
 
                     </div>
 
                     <Menu
                         selectedKeys={selectedMenu}
-                            style={{height: "50%", }}
+                            style={{height: "50%", border: "none"}}
                           theme={sliderColor}
                           onClick={handleClick}   mode="inline" items={items}/>
 
                     <Menu
                         selectedKeys={selectedTheme}
                         style={{
-
                             height: "40%",
                             display: "flex",
                             flexDirection: "column",
                             justifyContent: "flex-end",
+                            border: "none"
                         }}
                         onClick={handleClick} theme={sliderColor} mode="inline" items={items2}/>
 

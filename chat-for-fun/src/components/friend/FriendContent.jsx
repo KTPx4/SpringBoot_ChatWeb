@@ -66,6 +66,7 @@ const FriendContent = ({userId, openModal, messageApi})=>{
                 if(data)
                 {
                     setCurrentUser(data)
+                    console.log(data)
                     var btn = getButton(data.friend, data.type, data.status)
 
                     setStateFriend(btn)
@@ -117,6 +118,7 @@ const FriendContent = ({userId, openModal, messageApi})=>{
 
     const getButton = (friend, type, status) =>{
         var btn =null
+
         if(friend === true)
         {
             btn = (

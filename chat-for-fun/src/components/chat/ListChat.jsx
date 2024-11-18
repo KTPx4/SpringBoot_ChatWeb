@@ -5,11 +5,12 @@ import {ThemeContext} from "../../ThemeContext";
 import axios from "axios";
 import Spinner from "react-bootstrap/Spinner";
 import data from "bootstrap/js/src/dom/data";
+import * as item from "date-fns/locale";
 const SERVER = process.env.REACT_APP_SERVER || 'http://localhost:8080/api/v1';
 
 
 
-const CardS = ({searchName, clickUser, newMessage, oldMessage})=> {
+const CardS = ({updateCard, searchName, clickUser, newMessage, oldMessage})=> {
     const { currentTheme } = useContext(ThemeContext);
     const background = currentTheme.getBackground();
     const contentColor = currentTheme.getContent()
@@ -26,13 +27,16 @@ const CardS = ({searchName, clickUser, newMessage, oldMessage})=> {
     const [isLoading, setIsLoading] = useState(true);
 
     const onClickUser = (itemClick) =>{
+        var it = {...itemClick, selected: true, count: 0}
+
         var data = dataSet.map(item => {
-            return (item.id === itemClick.id ? {...item, selected: true, count: 0} : {...item, selected: false});
+            return (item.id === itemClick.id ? it : {...item, selected: false});
         });
+
         setDataSet(data)
         // console.log("index: ",itemClick)
 
-        clickUser(itemClick);
+        clickUser(it);
     }
 
     useEffect(() => {
@@ -72,6 +76,14 @@ const CardS = ({searchName, clickUser, newMessage, oldMessage})=> {
             setTempDataSet(data);
         }
     }, [searchName])
+
+    useEffect(()=>{
+        if(updateCard)
+        {
+            var data = dataSet.map(item => (item.id === updateCard.id ? updateCard : item))
+            setDataSet(data)
+        }
+    }, [updateCard])
 
     useEffect(()=>{
         if(newMessage)
@@ -149,9 +161,9 @@ const CardS = ({searchName, clickUser, newMessage, oldMessage})=> {
 
     if(!dataSet ||( dataSet?.length == 0 && !isLoading))
     {
-        return <i className="d-flex justify-content-center" style={{color:textColor}}>Make friends to chat!!!!</i>
+        return <i className="d-flex justify-content-center" style={{color:textColor, marginTop: 30}}>Make friends to chat!!!!</i>
     }
-    else if(isLoading) return  <div className="d-flex justify-content-center" ><Spinner animation="border" variant="info" /></div>
+    else if(isLoading) return  <div className="d-flex justify-content-center" ><Spinner className="mt-3" animation="border" variant="info" /></div>
 
     return (
 
@@ -189,7 +201,7 @@ const CardS = ({searchName, clickUser, newMessage, oldMessage})=> {
                                   }
                                   title={<span style={textStyle}>{item.name}</span>} // Áp dụng style cho title
 
-                                  description={<span className={item.count >0 ? "fw-bold":""} style={textStyle}>{item.messages.at(item.messages.length-1)?.content}</span>} // Áp dụng style cho
+                                  description={<span className={item.count >0 ? "fw-bold":""} style={textStyle}>{item.messages?.at(item.messages.length-1)?.content}</span>} // Áp dụng style cho
 
                               />
                           </Card>

@@ -1,8 +1,10 @@
 package com.Px4.ChatAPI.services.chat;
 
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
+import com.Px4.ChatAPI.controllers.requestParams.relation.GroupChatItem;
 import com.Px4.ChatAPI.controllers.requestParams.relation.FriendItem;
 import com.Px4.ChatAPI.controllers.requestParams.relation.ResponseFriends;
+import com.Px4.ChatAPI.controllers.requestParams.relation.ResponseGroupChat;
 import com.Px4.ChatAPI.models.Px4Generate;
 import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.account.AccountRepository;
@@ -12,12 +14,10 @@ import com.Px4.ChatAPI.services.RelationService;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -116,14 +116,17 @@ public class ChatService {
         query.addCriteria(Criteria.where("idConversation").is(Cv.getId()));
         query.addCriteria(Criteria.where("sender").ne(userID)); // Chỉ cập nhật tin nhắn không phải của userID
 
+
         Update update = new Update();
         update.set("isSeen", true);  // Cập nhật trường seen thành true
+        update.addToSet("whoSeen", userID); // Thêm userID vào mảng whoSeen nếu chưa có
 
         // Thực hiện cập nhật trong MongoDB mà không cần tải hết các tin nhắn về
         mongoTemplate.updateMulti(query, update, MessageModel.class);
 
         return true;
     }
+
     public List<MessageModel> getConservation(String groupId, int pageNumber) throws Exception
     {
         String userId = jwtRequestFilter.getIdfromJWT();
@@ -141,7 +144,7 @@ public class ChatService {
                 }
         );
 
-        // Kích thước trang là 10
+
         PageRequest pageRequest = PageRequest.of(pageNumber - 1, PAGE_SIZE);
 
         Page<MessageModel> page = messageRepository.findByIdConversationOrderByCreatedAtDesc(cv.getId(), pageRequest);
@@ -155,24 +158,25 @@ public class ChatService {
         return modifiableList;
     }
 
-    public ResponseFriends getAllChat()
+    public ResponseFriends getAllChat(boolean isPvP)
     {
 
         String userId = jwtRequestFilter.getIdfromJWT();
 
         Query query = new Query();
-        query.addCriteria(Criteria.where("members").in(userId)).addCriteria(Criteria.where("isPvP").is(true));
+        query.addCriteria(Criteria.where("members").in(userId)).addCriteria(Criteria.where("isPvP").is(isPvP));
         List<GroupModel> listGr = mongoTemplate.find(query, GroupModel.class);
+
         if(listGr.isEmpty())
         {
             return new ResponseFriends(0, null);
         }
-        List<String> grIds = listGr.stream().map(GroupModel::getId).toList();
+
         List<FriendItem> rs = listGr.stream().map(
                 gr ->{
                     List<String> members = gr.getMembers();
 
-                    System.out.println(gr.getId());
+
                     Query queryConv = new Query();
                     queryConv.addCriteria(Criteria.where("groupId").is(gr.getId()));
                     ConversationModel Conv = mongoTemplate.findOne(queryConv, ConversationModel.class);
@@ -186,10 +190,12 @@ public class ChatService {
                     List<MessageModel> listMessage = page.getContent();
 
                     if(listMessage.isEmpty()) return null;
+
                     List<MessageModel> modifiableList = new ArrayList<>(page.getContent());
 
                     Px4Generate.sortMessagesByDate(modifiableList);
 
+                    // get detail of friend
                     String friendId = members.get(0).equals(userId) ? members.get(1) : members.get(0);
 
                     AccountModel accFriend = accountRepository.findById(friendId).orElse(null);
@@ -198,18 +204,30 @@ public class ChatService {
                     FriendModel friendModel = friendRepository.findByAccountIDAndFriendID(userId, friendId).orElse(null);
 
                     FriendDetail friendDetail = new FriendDetail(accFriend, friendModel);
+
                     friendDetail.setGroupId(gr.getId());
 
                     friendDetail.setListMessage(modifiableList);
 
-                    int countSent = (int) modifiableList.stream()
-                            .filter(m -> !m.getSender().equals(userId) && !m.isSeen())  // Lọc các phần tử có sender khác userId
-                            .count();
+                    //count not seen message
+                    int countSent = 0;
+                    if(isPvP)
+                    {
+                        countSent = (int) modifiableList.stream()
+                                .filter(m -> !m.getSender().equals(userId) && !m.isSeen())  // Lọc các phần tử có sender khác userId
+                                .count();
+                    }
+                    else{
+                        countSent = (int) modifiableList.stream()
+                                .filter(m -> !m.getSender().equals(userId) && !m.getWhoSeen().contains(userId))  // Lọc các phần tử có sender khác userId
+                                .count();
+                    }
+
                     friendDetail.setCount(countSent);
 
                     // convert to item of response
                     FriendItem result = new FriendItem(friendDetail);
-
+                    result.setMembers(gr.getMembers());
                     return result;
                 }
         ).filter(result -> result != null).collect(Collectors.toList());
@@ -278,6 +296,53 @@ public class ChatService {
 */
     }
 
+    public ResponseGroupChat getAllChatGroup()
+    {
+        String userId = jwtRequestFilter.getIdfromJWT();
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("members").in(userId)).addCriteria(Criteria.where("isPvP").is(false));
+        List<GroupModel> listGr = mongoTemplate.find(query, GroupModel.class);
+        if( listGr == null || listGr.isEmpty() )
+        {
+            return new ResponseGroupChat();
+        }
+
+        List<GroupChatItem> groupChatItems = new ArrayList<>();
+
+        listGr.forEach(gr->{
+            GroupChatItem groupChatItem = new GroupChatItem(gr);
+
+            Query queryConv = new Query();
+            queryConv.addCriteria(Criteria.where("groupId").is(gr.getId()));
+            ConversationModel Conv = mongoTemplate.findOne(queryConv, ConversationModel.class);
+            if(Conv != null)
+            {
+                // Kích thước trang là 10
+                PageRequest pageRequest = PageRequest.of(1 - 1, PAGE_SIZE);
+
+                Page<MessageModel> page = messageRepository.findByIdConversationOrderByCreatedAtDesc(Conv.getId(), pageRequest);
+
+                List<MessageModel> listMessage = page.getContent();
+
+                if(listMessage != null && !listMessage.isEmpty())
+                {
+                    List<MessageModel> modifiableList = new ArrayList<>(page.getContent());
+
+                    Px4Generate.sortMessagesByDate(modifiableList);
+                    int countSent = (int) modifiableList.stream()
+                            .filter(m -> !m.getSender().equals(userId) && !m.getWhoSeen().contains(userId))  // Lọc các phần tử có sender khác userId
+                            .count();
+
+                    groupChatItem.setMessages(modifiableList);
+                    groupChatItem.setCount(countSent);
+
+                }
+            }
+            groupChatItems.add(groupChatItem);
+        });
+        return new ResponseGroupChat(groupChatItems.size(), groupChatItems);
+    }
     public List<MessageModel> getFriendChat(String friendId, int pageNumber)
     {
         String userId = jwtRequestFilter.getIdfromJWT();
@@ -311,6 +376,8 @@ public class ChatService {
 
         return modifiableList;
     }
+
+
     @Getter
     @Setter
     public class Result{

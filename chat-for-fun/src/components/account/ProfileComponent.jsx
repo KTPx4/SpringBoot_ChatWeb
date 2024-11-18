@@ -487,7 +487,7 @@ const Profile = ({openNotification, changeAvt})  =>{
                 </div>
 
                 <div className="body mt-3" style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
-                    <div className="body-left" style={{borderRight: `1px solid ${borderColor}`}}>
+                    <div className="body-left" style={{borderRight: `1px none ${borderColor}`}}>
 
                     </div>
 

@@ -50,7 +50,13 @@ public class FriendItem {
     private int count;
     @Getter
     @Setter
+
     private boolean selected;
+
+
+    @Getter
+    @Setter
+    private List<String> members = new ArrayList<>();
 
     public FriendItem() {
         this.count = 0;
@@ -99,6 +105,11 @@ public class FriendItem {
         this.count =0;
         this.selected = false;
 
+    }
+
+    public void addMember(String id)
+    {
+        members.add(id);
     }
 
     public String toJson()

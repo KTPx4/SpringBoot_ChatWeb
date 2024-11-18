@@ -11,6 +11,7 @@ public class RequestGroup {
     private String name;
 
     List<String> users;
+
     public void setUsers(List<String> users) {this.users = users;}
     public List<String> getUsers()
     {

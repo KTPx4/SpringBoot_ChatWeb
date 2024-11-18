@@ -57,9 +57,9 @@ const FriendComponent = ({userId, socketHandler}) =>{
     const [notify, setNotify] = useState(false);
     const [updateUser, setUpdateUser] = useState(null);
     const [listSearch, setListSearch] = useState([])
-    const showModal = (userId) => {
+    const showModal = (Id) => {
         setIsModalVisible(true);
-        setIdSendMess(userId);
+        setIdSendMess(Id);
     };
 
     useEffect(() => {
@@ -144,9 +144,9 @@ const FriendComponent = ({userId, socketHandler}) =>{
         }
     }, [notify])
 
-    const sendAction = (userId) =>{
+    const sendAction = (Id) =>{
         // console.log("sendAction:", userId)
-        if(socketHandler)socketHandler.sendAction(userId)
+        if(socketHandler)socketHandler.sendAction(Id)
     }
 
     // search

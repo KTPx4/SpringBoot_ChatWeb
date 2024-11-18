@@ -172,7 +172,7 @@ const CardS = ({TYPE="all",searchName, currentUser, clickUser, afterLoad, update
                                       }}
 
                                       avatar={
-                                          <Avatar src={item.avatar ?? "https://api.dicebear.com/9.x/fun-emoji/svg?seed=Sawyer"}
+                                              <Avatar src={item.avatar ?? "https://api.dicebear.com/9.x/fun-emoji/svg?seed=Sawyer"}
                                                   style={{
                                                       height: 40, width: 40,
                                                       background: "lightgrey"

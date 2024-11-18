@@ -9,7 +9,7 @@ import {
     RedoOutlined,
     CheckCircleOutlined, InfoCircleOutlined, SearchOutlined, CheckCircleTwoTone, CloseCircleTwoTone,
 } from "@ant-design/icons";
-import React, {useContext, useEffect, useState} from "react";
+import React, {useContext, useEffect, useRef, useState} from "react";
 import {ThemeContext} from "../../ThemeContext";
 import {Alert} from "react-bootstrap";
 import axios from "axios";
@@ -46,10 +46,12 @@ const SuggestContent = ({ openModal, messageApi, sendAction, updateUser, searchN
 
     const [page, setPage] = useState(1)
     const [waitLoading, setWaitLoading] = useState(false)
+    const [waitLoadingEnd, setWaitLoadingEnd] = useState(false)
     const [dataSuggests, setDataSuggests] = useState([])
     const [dataSearch, setDataSearch] = useState([])
     const [buttonLoading, setButtonLoading] = useState("")
     const [inputValue, setInputValue] = useState("")
+    const listSuggestRef = useRef(null);
 
     useEffect(() => {
         // Thiết lập một `timer` để cập nhật `debouncedValue` sau 500ms
@@ -82,24 +84,32 @@ const SuggestContent = ({ openModal, messageApi, sendAction, updateUser, searchN
 
         if(waitLoading === false)
         {
-            loadData()
+            loadData(page)
         }
 
     },[])
 
-    const loadData = async () => {
-        const action = `friend/suggest/all?page=${page}`
+    const loadData = async (Page ) => {
+        const action = `friend/suggest/all?page=${Page}`
         const method = "get"
-        setWaitLoading(true)
+        if(Page === 1)
+        {
+            setWaitLoading(true)
+        }
+        else setWaitLoadingEnd(true)
         const res = await sendServer(action, method, null)
         console.log(res)
         setWaitLoading(false)
+        setWaitLoadingEnd(false)
         if(res.data?.data )
         {
             var response = res.data.data
             if(response.count > 0)
             {
-                setDataSuggests(response.friends)
+                var datas = updateFriendsList(dataSuggests, response.friends)
+
+                setDataSuggests(datas)
+
             }
         }
         else{
@@ -113,6 +123,22 @@ const SuggestContent = ({ openModal, messageApi, sendAction, updateUser, searchN
             });
         }
     }
+    const updateFriendsList = (currentList, newData) => {
+        const updatedList = [...currentList];
+
+        newData.forEach(newItem => {
+            const index = updatedList.findIndex(item => item.id === newItem.id);
+            if (index !== -1) {
+                // Nếu có phần tử trùng ID, cập nhật phần tử đó
+                updatedList[index] = newItem;
+            } else {
+                // Nếu không có, thêm phần tử mới vào danh sách
+                updatedList.push(newItem);
+            }
+        });
+
+        return updatedList;
+    };
     useEffect(() => {
         if(updateUser)
         {
@@ -154,7 +180,24 @@ const SuggestContent = ({ openModal, messageApi, sendAction, updateUser, searchN
         sendAction(id)
     }
 
+    const handleScroll =()=>{
+        if (listSuggestRef.current) {
+            const { scrollTop, scrollHeight, clientHeight } = listSuggestRef.current;
+            console.log("scrollTop:", scrollTop, "clientHeight:", clientHeight, "scrollHeight:", scrollHeight);
+            // Kiểm tra nếu người dùng scroll đến cuối
+            if (scrollTop + clientHeight >= (scrollHeight - 1) ) {
+                console.log("ok")
+
+                const nextPage = page + 1;
+                loadData(nextPage);
+            }
+        }
+
+    }
+
+
     var data = ( inputValue) ? dataSearch : dataSuggests;
+
 
     return(
         <>
@@ -190,83 +233,91 @@ const SuggestContent = ({ openModal, messageApi, sendAction, updateUser, searchN
                 />
                 {waitLoading && (<Spinner style={{justifySelf: "center"}} className="mt-5 d-flex" variant="info"/>)}
                 {!waitLoading && (
-                    <List className="list-suggest" itemLayout="vertical" dataSource={data} split={false}
-                          style={{
-                              height: '95%',
-                              overflowY: 'auto',
-                              padding: "0px 10px"
-                          }}
-                          renderItem={item =>
-                          {
-                              var displayButton =
-                                  item.type === TYPE_FRIEND.none ? "Add" :
-                                      (item.type === TYPE_FRIEND.waiting ? "Cancel" : "Accept")
+                    <>
+                        <List className="list-suggest" itemLayout="vertical" dataSource={data} split={false}
+                              ref={listSuggestRef}
+                              onScroll={handleScroll}
+                              style={{
+                                  height: '95%',
+                                  overflowY: 'auto',
+                                  padding: "0px 10px"
+                              }}
+                              renderItem={item =>
+                              {
+                                  var displayButton =
+                                      item.type === TYPE_FRIEND.none ? "Add" :
+                                          (item.type === TYPE_FRIEND.waiting ? "Cancel" : "Accept")
 
-                              if(buttonLoading === item.id) displayButton = (<Spinner style={{width: 20, height: 20}} variant={"info"}/>)
-                              var displayColor =  item.type === TYPE_FRIEND.none ? textColor : (item.type === TYPE_FRIEND.waiting ? "#D91656" : "#0D92F4")
-                              if(item.friend === true){
-                                  displayButton = "Unfriend"
-                                  displayColor= "#D91656"
-                              }
-                              return (
-                                      <List.Item style={{paddingBottom: 0,  } }>
-                                          <Card
-                                                className="card-suggest"
-                                              style={{
-                                              overflowX: "auto",
-                                              width: '100%',
-                                              padding: 0,
-                                              background:   cardColor,
-                                              border: `1px ${colorName} solid`,
-                                              display: "flex",
-                                              alignItems: "center"
-                                            }}
-                                          >
-                                              <Card.Meta
-
+                                  if(buttonLoading === item.id) displayButton = (<Spinner style={{width: 20, height: 20}} variant={"info"}/>)
+                                  var displayColor =  item.type === TYPE_FRIEND.none ? textColor : (item.type === TYPE_FRIEND.waiting ? "#D91656" : "#0D92F4")
+                                  if(item.friend === true){
+                                      displayButton = "Unfriend"
+                                      displayColor= "#D91656"
+                                  }
+                                  return (
+                                      <>
+                                          <List.Item style={{paddingBottom: 0,  } }>
+                                              <Card
+                                                  className="card-suggest"
                                                   style={{
-                                                      alignItems:'center',
+                                                      overflowX: "auto",
+                                                      width: '100%',
+                                                      padding: 0,
+                                                      background:   cardColor,
+                                                      border: `1px ${colorName} solid`,
                                                       display: "flex",
-                                                      justifyContent: "center",
-                                                      overflow: "auto"
+                                                      alignItems: "center"
                                                   }}
+                                              >
+                                                  <Card.Meta
 
-                                                  avatar={
-                                                      <Avatar src={item.avatar ?? "https://api.dicebear.com/9.x/fun-emoji/svg?seed=Sawyer"}
-                                                              style={{
-                                                                  height: 40, width: 40,
-                                                                  background: "lightgrey"
-                                                              }}
-                                                      />
-                                                  }
-                                                  title={<span style={textStyle}>
+                                                      style={{
+                                                          alignItems:'center',
+                                                          display: "flex",
+                                                          justifyContent: "center",
+                                                          overflow: "auto"
+                                                      }}
+
+                                                      avatar={
+                                                          <Avatar src={item.avatar ?? "https://api.dicebear.com/9.x/fun-emoji/svg?seed=Sawyer"}
+                                                                  style={{
+                                                                      height: 40, width: 40,
+                                                                      background: "lightgrey"
+                                                                  }}
+                                                          />
+                                                      }
+                                                      title={<span style={textStyle}>
                                                       <Popover placement={"bottom"} content={item?.name ?? ""}>
                                                             {item.name??""}
                                                     </Popover>
                                                     </span>} // Áp dụng style cho title
 
-                                                  description={<span style={textStyle}><i>{item.id ??""}</i></span>} // Áp dụng style cho
+                                                      description={<span style={textStyle}><i>{item.id ??""}</i></span>} // Áp dụng style cho
 
-                                              />
-                                              <Button
-                                                  onClick={()=>actionButton(item.id)}
-                                                  style={{width: 80,background: contentColor, color: displayColor, border: `1px solid ${borderColor}`}}
+                                                  />
+                                                  <Button
+                                                      onClick={()=>actionButton(item.id)}
+                                                      style={{width: 80,background: contentColor, color: displayColor, border: `1px solid ${borderColor}`}}
                                                       className="suggest-btn-add mt-3">
-                                                  {displayButton}
-                                              </Button>
-                                              <Button
-                                                  onClick={()=>openModal(item.id)}
-                                                  style={{width: 80,background: contentColor, color: textColor, border: `1px solid ${borderColor}`}}
+                                                      {displayButton}
+                                                  </Button>
+                                                  <Button
+                                                      onClick={()=>openModal(item.id)}
+                                                      style={{width: 80,background: contentColor, color: textColor, border: `1px solid ${borderColor}`}}
                                                       className="suggest-btn-add mt-3">
-                                                  Fast Chat
-                                              </Button>
-                                          </Card>
-                                      </List.Item>
-                              )
+                                                      Fast Chat
+                                                  </Button>
+                                              </Card>
+                                          </List.Item>
+                                      </>
+                                  )
 
-                          }
-                          }
-                    />
+                              }
+                              }
+                        >
+
+                        </List>
+                    </>
                 )}
 
             </div>

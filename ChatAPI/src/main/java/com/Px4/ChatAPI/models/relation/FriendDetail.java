@@ -40,6 +40,7 @@ public class FriendDetail {
     @Getter
     @Setter
     private List<MessageModel> listMessage;
+
     @Getter
     @Setter
     private int count;

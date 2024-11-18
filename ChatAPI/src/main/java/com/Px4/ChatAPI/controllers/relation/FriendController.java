@@ -5,14 +5,11 @@ import com.Px4.ChatAPI.controllers.requestParams.relation.FriendItem;
 import com.Px4.ChatAPI.controllers.requestParams.relation.ResponseFriends;
 import com.Px4.ChatAPI.controllers.requestParams.relation.ResponseSuggest;
 import com.Px4.ChatAPI.models.Px4Response;
-import com.Px4.ChatAPI.models.relation.FriendDetail;
 import com.Px4.ChatAPI.services.RelationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/friend")

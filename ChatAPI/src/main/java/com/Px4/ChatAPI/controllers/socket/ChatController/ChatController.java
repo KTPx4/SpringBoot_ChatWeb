@@ -2,6 +2,7 @@ package com.Px4.ChatAPI.controllers.socket.ChatController;
 
 import com.Px4.ChatAPI.config.ResponeMessage;
 import com.Px4.ChatAPI.controllers.requestParams.relation.ResponseFriends;
+import com.Px4.ChatAPI.controllers.requestParams.relation.ResponseGroupChat;
 import com.Px4.ChatAPI.models.Px4Generate;
 import com.Px4.ChatAPI.models.Px4Response;
 import com.Px4.ChatAPI.models.message.MessageModel;
@@ -28,7 +29,7 @@ public class ChatController {
         ResponseFriends res = null;
         try{
 
-           res = chatService.getAllChat();
+           res = chatService.getAllChat(true);
 
         }
         catch(Exception e)
@@ -68,8 +69,33 @@ public class ChatController {
         // handle for send make friend - accept make fiend  + set isFriend = true
         return new ResponseEntity<>(new Px4Response<>(mess, listMess), status);
     }
+    @GetMapping("/group")
+    public ResponseEntity<Px4Response> getAllGroupChat()
+    {
+        String mess = ResponeMessage.getSucce;
+        HttpStatus status = HttpStatus.OK;
+        ResponseGroupChat res = null;
+        try{
+            res = chatService.getAllChatGroup();
+
+        }
+        catch(Exception e)
+        {
+            mess = ResponeMessage.SystemError;
+            e.printStackTrace();
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+            if(e!=null && e.getMessage().startsWith("chat"))
+            {
+                mess = e.getMessage().split("-")[1];
+                status = HttpStatus.BAD_REQUEST;
+            }
+        }
+        // handle for send make friend - accept make fiend  + set isFriend = true
+        return new ResponseEntity<>(new Px4Response<>(mess, res), status);
+    }
+
     @GetMapping("/group/{group}")
-    public ResponseEntity<Px4Response> getAllChat(@PathVariable String group, @RequestParam(value = "page" , defaultValue = "1") int page)
+    public ResponseEntity<Px4Response> getGroupChat(@PathVariable String group, @RequestParam(value = "page" , defaultValue = "1") int page)
     {
         String mess = ResponeMessage.getSucce;
         HttpStatus status = HttpStatus.OK;

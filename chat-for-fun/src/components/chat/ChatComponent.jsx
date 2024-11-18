@@ -1,6 +1,6 @@
 import React, {useState, useContext, useEffect, useRef} from 'react';
 import ListChat from "./ListChat";
-import {Avatar, Button, Image, Input, Layout, Popover, Result, Tooltip} from "antd";
+import {Avatar, Button, Image, Input, Layout, message, Popover, Result, Tooltip} from "antd";
 import SliderHead from "./SliderHead";
 
 import {
@@ -17,6 +17,7 @@ import WebSocketHandler from "./WebSocketHandler";
 import useHCMTime from "../../hooks/useHCMTime";
 import axios from "axios";
 import {Alert} from "react-bootstrap";
+import Spinner from "react-bootstrap/Spinner";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -78,7 +79,9 @@ const ChatComponent = ({socketHandler}) =>{
     const [webSocketHandler, setWebSocketHandler] = useState(socketHandler);
 
     const [isCanSend, setCanSend] = useState(true);
+    const [messageApi, contextHolder2] = message.useMessage();
 
+    const [loadingStatus, setStatusLoading] = useState(false)
 
     useEffect(() => {
         const token = localStorage.getItem('token-auth');
@@ -86,7 +89,6 @@ const ChatComponent = ({socketHandler}) =>{
 
         // Chỉ thiết lập callback nếu `socketHandler` đã tồn tại
         socketHandler.setOnMessageReceived((newMessage) => {
-
             if (newMessage.sender === myId)
             {
                 var content = newMessage.content;
@@ -102,7 +104,7 @@ const ChatComponent = ({socketHandler}) =>{
                 setlistWaitSend(ls)
             }
 
-            if (selectedCardRef?.current && selectedCardRef.current.id === newMessage.sender) {
+            if (selectedCardRef?.current && selectedCardRef.current.id === newMessage.sender && isCanSend) {
                 socketHandler.sendSeen(selectedCardRef.current.id);
             }
             else if(!selectedCard && newMessage.sender !== myId)
@@ -124,8 +126,25 @@ const ChatComponent = ({socketHandler}) =>{
 
 // cập nhật ref mỗi khi selectedCard thay đổi
     useEffect(() => {
-        selectedCardRef.current = selectedCard;
-        inputRef.current?.focus()
+        if(selectedCard)
+        {
+            console.log("update: ", selectedCard)
+            selectedCardRef.current = selectedCard;
+            if(selectedCard.status?.toLowerCase() === STATUS_FRIEND.blockedBy || selectedCard.status?.toLowerCase() === STATUS_FRIEND.blocked)
+            {
+                console.log("run")
+                setCanSend(false)
+            }
+            else{
+                if(webSocketHandler) webSocketHandler.sendSeen(selectedCard.id)
+                inputRef.current?.focus()
+                setCanSend(true)
+            }
+            if(messagesEndRef && messagesEndRef.current)
+            {
+                messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
     }, [selectedCard]);
 
 
@@ -209,13 +228,9 @@ const ChatComponent = ({socketHandler}) =>{
 
     const clickUser = (card) =>{
         console.log(card)
-        if(card.status?.toLowerCase() === STATUS_FRIEND.blockedBy || card.status?.toLowerCase() === STATUS_FRIEND.blocked)
-        {
-            setCanSend(false)
-        }
         setSelectedCard(card);
         setListMessage(card.messages)
-        if(webSocketHandler)webSocketHandler.sendSeen(card.id)
+
     }
 
     const onSendMess = () =>{
@@ -243,10 +258,83 @@ const ChatComponent = ({socketHandler}) =>{
         setError(true);
     };
 
-    const HeaderContent = () =>{
-        if(selectedCard !== null)
+    const sendServer= async (action, method, data)=>{
+        try {
+            const url = `${SERVER}/${action}`
+            const res =  await axios({
+                url: url,
+                method: method,
+                headers:{
+                    authorization: `Bearer ${token}`,
+                    // "Content-Type": "application/json",
+                },
+                data: data
+            })
+
+            return res
+
+        } catch (err) {
+            console.log(err?.response)
+            alert(err?.response.data.message ?? "Failed to connect Server")
+            return err?.response
+        }
+    }
+
+    const handleStatusUser = async()=>{
+        if(!selectedCard || loadingStatus) return;
+        const action = `friend/status/${selectedCard.id}`
+        const method = "post"
+        setStatusLoading(true)
+        const response = await sendServer(action, method, null)
+
+        setStatusLoading(false)
+
+        if(response?.status && response.status === 200)
         {
-            return(
+            const data = response.data.data
+            var status = data.status.toLowerCase();
+            var newUpdate = {...selectedCard, status: status}
+
+            setSelectedCard(newUpdate)
+        }
+        else{
+            messageApi.open({
+                type: "error", // success, error , warning
+                content: response?.data?.message ?? "Error, try again!",
+                className: 'custom-class',
+                style: {
+                    marginTop: '10vh',
+                },
+            });
+        }
+    }
+
+    const childMore = (<>
+        <div style={{
+            display: "flex",
+            flexDirection: "column",
+            background: "white",
+        }}>
+            <Button
+                onClick={()=> window.location.replace(`/account/${selectedCard?.id}`)}
+                className="m-1"
+            >
+                Profile
+            </Button>
+            <Button
+                onClick={handleStatusUser}
+                style={{color: selectedCard?.status === STATUS_FRIEND.normal ? "black" : "#2f99f0"}}
+                className="m-1"
+            >
+                {loadingStatus && (<Spinner style={{width: 20, height: 20}} variant="info" />)}
+                {!loadingStatus && (selectedCard?.status === STATUS_FRIEND.normal ? "Block" : "UnBlocked")}
+            </Button>
+        </div>
+    </>)
+
+    const HeaderContent = () => {
+        if (selectedCard !== null) {
+            return (
                 <>
                     <Avatar
                         shape="circle"
@@ -263,7 +351,12 @@ const ChatComponent = ({socketHandler}) =>{
                         <h3 style={{color: textColor, display: "flex", justifyContent: "center", alignItems:"center"}}>{selectedCard.name}</h3>
                         <div>
                             <PhoneOutlined className="btn-call" style={{ color: textColor,fontSize: 30, marginRight: 30 }} />
-                            <MoreOutlined className="btn-more" style={{ color: textColor,fontSize: 30 }} />
+                            {selectedCard.status?.toLowerCase() !== STATUS_FRIEND.blockedBy && (
+                                <Tooltip title={childMore} placement="bottomLeft" color={"white"}>
+                                    <MoreOutlined className="btn-more" style={{ color: textColor,fontSize: 30 }} />
+                                </Tooltip>
+                            )}
+
                         </div>
                     </div>
                 </>
@@ -295,7 +388,7 @@ const ChatComponent = ({socketHandler}) =>{
             >
 
                 {SLid}
-                <ListChat searchName={searchValue} clickUser={clickUser} newMessage={newMess} oldMessage={oldMess} />
+                <ListChat updateCard={selectedCard} searchName={searchValue} clickUser={clickUser} newMessage={newMess} oldMessage={oldMess} />
             </Sider>
 
             <Layout
@@ -353,7 +446,7 @@ const ChatComponent = ({socketHandler}) =>{
 
                                             <div
 
-                                                // key={item.id + Date.now()}
+                                                key={item.id + Date.now()}
                                                 className={ `message 
                                                     ${item.sender === myId ?"message-me" : "message message-friend"} 
                                                     ${(page > 1 &&  index % (15) === 0 ) ? "message-border" : ""}
@@ -425,6 +518,8 @@ const ChatComponent = ({socketHandler}) =>{
                                 <div ref={messagesEndRef}/>
                             </>
                         )}
+
+                    {/*    footer input message */}
                     </Content>
                     {!isCanSend && (
                         <Alert variant="warning" >You has been blocked or blocked by this user!</Alert>
@@ -457,7 +552,7 @@ const ChatComponent = ({socketHandler}) =>{
                                     }}
                                     suffix={
                                         <Popover content={  <EmojiPicker onEmojiClick={onEmojiClick}/>} trigger="hover">
-                                            <Button icon={<SmileOutlined/>} onClick={null}/>
+                                            <Button style={{border: "none"}} icon={<SmileOutlined/>} onClick={null}/>
                                         </Popover>
                                     }
                                 />

@@ -25,7 +25,7 @@ const SliderHead = ({searchName, collapsed}) =>{
 
     return(
         <div style={{
-            height: "15%",
+            height: "10%",
 
         }}>
             <h4 style={{
