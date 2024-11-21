@@ -12,6 +12,7 @@ class WebSocketHandler {
         this.onGetSeen = null;
         this.onAddFriend = null;
         this.onSearch = null;
+        this.onUpdateGroup = null;
     }
     // Thiết lập callback cho tin nhắn mới
     setOnMessageReceived(callback) {
@@ -25,6 +26,9 @@ class WebSocketHandler {
     }
     setOnSearch(callback) {
         this.onSearch = callback;
+    }
+    setOnUpdateGroup(callback) {
+        this.onUpdateGroup = callback;
     }
     // Khởi tạo kết nối WebSocket
     connect() {
@@ -63,7 +67,7 @@ class WebSocketHandler {
                     }
                     else if(msg.type === 'seen')
                     {
-                        this.onGetSeen(msg.sender)
+                        this.onGetSeen(msg)
                     }
                     else if(msg.type === 'friend')
                     {
@@ -75,6 +79,16 @@ class WebSocketHandler {
                     }
                 });
 
+                this.stompClient.subscribe('/user/update/group', (message) => {
+                    const res = JSON.parse(message.body);
+                    if (res.type && res.type === 'error' && res.sender === 'server') {
+                        alert(res.content);
+                    }
+                    else{
+                        this.onUpdateGroup(res)
+                    }
+                })
+
             },
             (error) => {
                 console.error('Connection error:', error);
@@ -85,6 +99,15 @@ class WebSocketHandler {
             alert("Server has been closed connect. Please try again!")
             console.log(event.wasClean ? 'Connection closed cleanly' : 'Connection error:', event.reason || 'Unknown reason');
         };
+    }
+
+    sendUpdateGroup(updateGroup)
+    {
+        if (this.stompClient && this.stompClient.connected) {
+            this.stompClient.send('/app/update.group', {}, JSON.stringify(updateGroup));
+        }else {
+            console.log("Not connected to WebSocket or message is empty.");
+        }
     }
 
     // Hàm gửi tin nhắn đến WebSocket server

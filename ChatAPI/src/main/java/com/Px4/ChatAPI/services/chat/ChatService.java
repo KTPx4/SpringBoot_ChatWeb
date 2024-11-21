@@ -50,6 +50,8 @@ public class ChatService {
     private int  PAGE_SIZE = 15;
     @Autowired
     private FriendRepository friendRepository;
+    @Autowired
+    private GroupSettingRepository groupSettingRepository;
 
     public ChatService(@Lazy RelationService relationService) {
         this.relationService = relationService;
@@ -65,12 +67,12 @@ public class ChatService {
            {
                Optional<AccountModel> acc = accountRepository.findById(toGroupId);
                if(acc.isEmpty()) throw new Exception("conversation-Group/User not found");
-
                //GroupModel newGr = new GroupModel("chat", true, Arrays.asList(userID, toGroupId));
                 gr = relationService.initGroup(userID, toGroupId);
+
            }else gr = grModel.get();
 
-           if(gr.isPvP())
+           if(gr.isPvP()) // chat 2 pvp
            {
                List<String> mem = gr.getMembers();
                String user1 = mem.get(0);
@@ -78,6 +80,11 @@ public class ChatService {
 
 
                if(!relationService.canChat(user1, user2)) throw new Exception("conversation-You has blocked or blocked by this user!");
+           }
+           else{ // group
+                GroupSettingModel grSetting = groupSettingRepository.findByGroupId(gr.getId());
+                List<String> listCanSend = grSetting.getCanSend();
+                if(listCanSend.size() > 0 && !listCanSend.contains(userID)) throw new Exception("conversation-You can't send message in this group");
            }
            return gr;
 
@@ -102,8 +109,10 @@ public class ChatService {
             conversation = new ConversationModel(groupId);
             conversation = conversationRepository.save(conversation);
         }
-
+        AccountModel acc = accountRepository.findById(userID).get();
         MessageModel messageModel = new MessageModel(conversation.getId(), userID, reply, contentType, content);
+        messageModel.setAvatar(acc.getImage());
+        messageModel.setSenderName(acc.getName());
         messageModel = messageRepository.save(messageModel);
         return messageModel;
     }
@@ -145,14 +154,26 @@ public class ChatService {
         );
 
 
-        PageRequest pageRequest = PageRequest.of(pageNumber - 1, PAGE_SIZE);
 
-        Page<MessageModel> page = messageRepository.findByIdConversationOrderByCreatedAtDesc(cv.getId(), pageRequest);
-        List<MessageModel> listMessage = page.getContent();
 
-        List<MessageModel> modifiableList = new ArrayList<>(page.getContent());
+        List<MessageModel> modifiableList = new ArrayList<>();
 
-        Px4Generate.sortMessagesByDate(modifiableList);
+        if(cv != null)
+        {
+            // Kích thước trang là 10
+            PageRequest pageRequest = PageRequest.of(pageNumber - 1, PAGE_SIZE);
+
+            Page<MessageModel> page = messageRepository.findByIdConversationOrderByCreatedAtDesc(cv.getId(), pageRequest);
+
+            List<MessageModel> listMessage = page.getContent();
+
+            if(listMessage != null && !listMessage.isEmpty())
+            {
+                modifiableList = new ArrayList<>(page.getContent());
+
+                Px4Generate.sortMessagesByDate(modifiableList);
+            }
+        }
 
      //   modifiableList.forEach(m -> System.out.println(m.getContent() +" | " + Px4Generate.toHCMtime(m.getCreatedAt())));
         return modifiableList;
@@ -339,7 +360,17 @@ public class ChatService {
 
                 }
             }
+
             groupChatItems.add(groupChatItem);
+
+            Query querySetting = new Query();
+            querySetting.addCriteria(Criteria.where("groupId").is(gr.getId()));
+            GroupSettingModel groupSetting = mongoTemplate.findOne(querySetting, GroupSettingModel.class);
+            if(groupSetting != null)
+            {
+                groupChatItem.setSettings(groupSetting);
+            }
+
         });
         return new ResponseGroupChat(groupChatItems.size(), groupChatItems);
     }

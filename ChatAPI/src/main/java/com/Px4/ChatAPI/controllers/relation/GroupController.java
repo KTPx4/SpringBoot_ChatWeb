@@ -4,8 +4,10 @@ import com.Px4.ChatAPI.config.ResponeMessage;
 import com.Px4.ChatAPI.controllers.requestParams.relation.GroupChatItem;
 import com.Px4.ChatAPI.controllers.requestParams.relation.RequestGroup;
 import com.Px4.ChatAPI.controllers.requestParams.relation.ResponseGroup;
+import com.Px4.ChatAPI.controllers.requestParams.relation.UpdateGroup;
 import com.Px4.ChatAPI.models.Px4Response;
 import com.Px4.ChatAPI.models.relation.GroupModel;
+import com.Px4.ChatAPI.services.GroupService;
 import com.Px4.ChatAPI.services.RelationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +25,8 @@ public class GroupController {
     private static final Logger log = LoggerFactory.getLogger(GroupController.class);
     @Autowired
     RelationService relationService;
+    @Autowired
+    private GroupService groupService;
 
     @GetMapping()
     public ResponseEntity<Px4Response> getAll()
@@ -74,6 +78,36 @@ public class GroupController {
         // handle for send make friend - accept make fiend  + set isFriend = true
         return new ResponseEntity<>(new Px4Response<>(mess, gr), status);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Px4Response> updateGroup(@RequestBody UpdateGroup updateGroup, @PathVariable String id, @RequestParam(value = "permis", defaultValue = "") String permis)
+    {
+        String mess = ResponeMessage.createSuccess;
+        HttpStatus status = HttpStatus.OK;
+        GroupChatItem gr = null;
+
+        try{
+            gr = groupService.update(id, updateGroup, permis);
+        }
+        catch (Exception e)
+        {
+            status = HttpStatus.BAD_REQUEST;
+            if(e.getMessage().startsWith("group")) mess = e.getMessage().split("-")[1];
+
+            else {
+                e.printStackTrace();
+                mess = ResponeMessage.SystemError;
+                status = HttpStatus.INTERNAL_SERVER_ERROR;
+            }
+        }
+
+
+
+        return new ResponseEntity<>(new Px4Response<>(mess, gr), status);
+    }
+
+
+
 
 
 }

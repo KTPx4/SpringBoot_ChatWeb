@@ -62,6 +62,11 @@ public class GroupModel {
         members.add(memberId);
     }
 
+    public void addMember(List<String> members)
+    {
+        this.members.addAll(members);
+    }
+
     public void removeMember(String memberId)
     {
         members.remove(memberId);

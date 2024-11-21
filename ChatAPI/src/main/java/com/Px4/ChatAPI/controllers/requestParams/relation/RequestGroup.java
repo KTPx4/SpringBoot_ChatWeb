@@ -21,4 +21,5 @@ public class RequestGroup {
     {
         users.add(user);
     }
+
 }

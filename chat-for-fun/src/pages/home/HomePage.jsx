@@ -61,6 +61,7 @@ const HomePage = ({openNotification})  =>{
     const {myAccount} = useStore()
     const [collapsed, setCollapsed] = useState(localStorage.getItem('collapsed-main') ?? false);
     const { currentTheme, changeTheme } = useContext(ThemeContext);
+    const key = currentTheme.getKey();
     const [selectedTheme, setSelectedTheme] = useState(currentTheme.getKey); // Quản lý các key được chọn
     const [selectedMenu, setSelectedMenu] = useState("chats"); // Quản lý các key được chọn
     // const [bodyComponent,setBodyComponent] = useState(<ChatComponent />);
@@ -205,6 +206,7 @@ const HomePage = ({openNotification})  =>{
                       type="text/css" />
             </Helmet>
             <Modal
+                className={`modal-${key === "theme_dark" ? "dark":"light"}`}
                 title="Log Out"
                 open={open}
                 onOk={handleOk}

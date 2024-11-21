@@ -39,6 +39,7 @@ const Profile = ({openNotification, changeAvt})  =>{
     const [myId, setMyId] = useState(id||"px4");
 
     const { currentTheme } = useContext(ThemeContext);
+    const key = currentTheme.getKey();
     const themeName = currentTheme.getKey();
     const contentColor = currentTheme.getContent()
     const textColor = currentTheme.getText();
@@ -336,7 +337,9 @@ const Profile = ({openNotification, changeAvt})  =>{
             </Helmet>
             {contextHolder2}
             <Modal
-                title="Select an Image"
+                className={`modal-${key === "theme_dark" ? "dark":"light"}`}
+                title={<p style={{color: textColor}}>Select an Image</p>}
+
                 open={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
                 footer={null}
@@ -365,8 +368,9 @@ const Profile = ({openNotification, changeAvt})  =>{
                 </div>
             </Modal>
             <Modal
-                style={{color:contentColor}}
-                title={title}
+                className={`modal-${key === "theme_dark" ? "dark":"light"}`}
+
+                title={<p style={{color: textColor}}>{title}</p>}
                 open={open}
                 onOk={handleOk}
                 confirmLoading={confirmLoading}
@@ -379,21 +383,21 @@ const Profile = ({openNotification, changeAvt})  =>{
                             onChange={(e) => {
                                 setOldPass(e.target.value)
                                 setErr("")
-                            }}  style={{margin: 5}}  placeholder="Old Password" />
+                            }}  style={{margin: 5, background: "#dadada", border: "none"}}  placeholder="Old Password" />
 
                         <Input
                             defaultValue={null}
                             onChange={(e) => {
                                 setNewPass(e.target.value)
                                 setErr("")
-                            }} style={{margin: 5}} placeholder="New Password" />
+                            }} style={{margin: 5, background: "#dadada", border: "none"}} placeholder="New Password" />
 
                         <Input
                             defaultValue={null}
                             onChange={(e) => {
                                 setConfirm(e.target.value)
                                 setErr("")
-                            }} style={{margin: 5}} placeholder="Confirm Password" />
+                            }} style={{margin: 5, background: "#dadada", border: "none"}} placeholder="Confirm Password" />
                     </div>
                 )}
 
@@ -404,7 +408,7 @@ const Profile = ({openNotification, changeAvt})  =>{
                             onChange={(e) => {
                                 setNewName(e.target.value)
                                 setErr("")
-                            }}  style={{margin: 5}}  placeholder="Name" />
+                            }}  style={{margin: 5, background: "#dadada", border: "none"}}  placeholder="Name" />
 
                         {/*<Input*/}
                         {/*    defaultValue={newUsername}*/}
@@ -418,7 +422,7 @@ const Profile = ({openNotification, changeAvt})  =>{
                             onChange={(e) => {
                                 setNewEmail(e.target.value)
                                 setErr("")
-                            }} style={{margin: 5}} placeholder="Email" />
+                            }} style={{margin: 5, background: "#dadada", border: "none"}} placeholder="Email" />
                     </div>
                 )}
                 {err && <p  style={{margin: 5}}  className="text-danger"><i>{err}</i></p>}

@@ -12,6 +12,7 @@ const ContentLeft = ({dataSet, dataFriend, clickGroup, messageApi, createAction}
     const [myId, setMyId] = useState(id||"px4");
 
     const { currentTheme } = useContext(ThemeContext);
+    const key = currentTheme.getKey();
     const background = currentTheme.getBackground();
     const contentColor = currentTheme.getContent()
     const cardColor = currentTheme.getCard();
@@ -101,8 +102,10 @@ const ContentLeft = ({dataSet, dataFriend, clickGroup, messageApi, createAction}
 
     return(
         <>
-            <Modal title="Create group" open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
-                <div style={{display: "flex", flexDirection: "row", overflow: "auto", width: "100%"}}>
+            <Modal
+                className={`modal-${key === "theme_dark" ? "dark":"light"}`}
+                title={<p style={{color:textColor}}>Create group</p>} open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
+                <div style={{display: "flex",  flexDirection: "row", overflow: "auto", width: "100%"}}>
                     <div>
                         <Input
                             key={"input-add"}
@@ -115,11 +118,11 @@ const ContentLeft = ({dataSet, dataFriend, clickGroup, messageApi, createAction}
                                 return(
                                     <>
                                         <Tooltip id={item.id} title={item.name} >
-                                            <Card style={{width: "200px", marginTop: "10px"}}>
+                                            <Card style={{width: "200px", marginTop: "10px", background: cardColor, border: `1px solid ${borderColor}`}}>
                                                 <Card.Meta
                                                     avatar={<Avatar size={40} src={item.avatar} />}
-                                                    title={item.name}
-                                                    description={item.id}
+                                                    title={<p style={{color: textColor}}>{item.name}</p>}
+                                                    description={<p style={{color: textColor}}>{item.id}</p>}
                                                 />
                                                 <div style={{marginTop: 8,display: "flex", justifyContent: "center"}}>
                                                     <Button onClick={()=>{

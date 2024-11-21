@@ -114,9 +114,9 @@ const ChatComponent = ({socketHandler}) =>{
             setListMessage((prevMessages) => [...prevMessages, newMessage]);
         });
 
-        socketHandler.setOnGetSeen((userSeen) => {
+        socketHandler.setOnGetSeen((msg) => {
 
-            if (selectedCardRef.current && userSeen === selectedCardRef.current.id) {
+            if (selectedCardRef.current && msg.sender === selectedCardRef.current.id) {
                 setIsSeen(true);
             }
         });

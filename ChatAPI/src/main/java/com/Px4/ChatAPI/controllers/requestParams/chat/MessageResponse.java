@@ -3,34 +3,35 @@ package com.Px4.ChatAPI.controllers.requestParams.chat;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+@Getter
+@Setter
 public class MessageResponse {
-    @Getter
-    @Setter
+
+
     private String id;
-    @Getter
-    @Setter
+
     private String type;
-    @Getter
-    @Setter
+
     private String sender;
-    @Getter
-    @Setter
+    private String senderName;
+    private String avatar;
+
     private String to;
-    @Getter
-    @Setter
+
     private String content;
-    @Getter
-    @Setter
+
     private String contentType;
-    @Getter
-    @Setter
+
     private String replyMessageId;
-    @Getter
-    @Setter
+
     private Date createdAt;
 
+
+    private List<String> whoSeen = new ArrayList<>();
 
 
     public MessageResponse() {

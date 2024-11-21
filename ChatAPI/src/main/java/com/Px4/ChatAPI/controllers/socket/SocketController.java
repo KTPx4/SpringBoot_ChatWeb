@@ -2,11 +2,14 @@ package com.Px4.ChatAPI.controllers.socket;
 
 import com.Px4.ChatAPI.controllers.requestParams.chat.SeenRequest;
 import com.Px4.ChatAPI.controllers.requestParams.relation.FriendItem;
+import com.Px4.ChatAPI.controllers.requestParams.relation.GroupChatItem;
+import com.Px4.ChatAPI.controllers.requestParams.relation.UpdateGroup;
 import com.Px4.ChatAPI.models.message.MessageModel;
 import com.Px4.ChatAPI.controllers.requestParams.chat.MessageRequest;
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.requestParams.chat.MessageResponse;
 import com.Px4.ChatAPI.models.relation.GroupModel;
+import com.Px4.ChatAPI.services.GroupService;
 import com.Px4.ChatAPI.services.RelationService;
 import com.Px4.ChatAPI.services.chat.ChatService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -27,13 +30,15 @@ public class SocketController {
     private final JwtRequestFilter jwtRequestFilter;
     private final ChatService chatService;
     private final RelationService relationService;
+    private final GroupService groupService;
 
     @Autowired
-    public SocketController(SimpMessagingTemplate messagingTemplate, JwtRequestFilter jwtRequestFilter, ChatService chatService, RelationService relationService) {
+    public SocketController(SimpMessagingTemplate messagingTemplate, JwtRequestFilter jwtRequestFilter, ChatService chatService, RelationService relationService, GroupService groupService) {
         this.messagingTemplate = messagingTemplate;
         this.jwtRequestFilter = jwtRequestFilter;
         this.chatService = chatService;
         this.relationService = relationService;
+        this.groupService = groupService;
     }
 
     @MessageMapping("/connect")
@@ -74,6 +79,8 @@ public class SocketController {
 
                 messResponse.setId(messDB.getId()); // set id of message model
                 messResponse.setCreatedAt(messDB.getCreatedAt());
+                messResponse.setAvatar(messDB.getAvatar());
+                messResponse.setSenderName(messDB.getSenderName());
                 gr.getMembers().forEach(id -> { // send notice to each member
                     switch (contentType)
                     {
@@ -115,6 +122,46 @@ public class SocketController {
 
     }
 
+    @MessageMapping("/update.group")
+    public void updateGroup(@Header("simpUser") Principal principal, UpdateGroup updateGroup)
+    {
+        // Lấy username từ token để gán cho tin nhắn
+        String userID = principal.getName();
+        try{
+            String idGroup = updateGroup.getId();
+            if(idGroup == null || idGroup.isEmpty()) throw  new Exception("conversation-Id group must not null");
+            GroupModel gr = chatService.canSendMess(userID, idGroup);
+            GroupChatItem grI = groupService.update(idGroup, updateGroup, "");
+
+            if(gr.getMembers().size() > 0)
+            {
+
+
+                gr.getMembers().forEach(id -> { // send notice to each member
+                    messagingTemplate.convertAndSendToUser(id, "/update/group", grI);
+                });
+            }
+
+
+        }
+        catch (Exception e)
+        {
+            if(e.getMessage().startsWith("conversation"))
+            {
+                String err = e.getMessage().split("-")[1];
+                MessageResponse messResponse = new MessageResponse();
+                messResponse.setType("error");
+                messResponse.setSender("server");
+                messResponse.setContent(err);
+                messResponse.setContentType("text");
+
+                messagingTemplate.convertAndSendToUser(userID, "/update/group", messResponse);
+            }
+            else{
+                e.printStackTrace();
+            }
+        }
+    }
     @MessageMapping("/seen")
     public void setSeen(@Header("simpUser") Principal principal, SeenRequest seenRequest) {
         String groupId = seenRequest.getTo();
@@ -150,7 +197,6 @@ public class SocketController {
 
                 gr.getMembers().forEach(id -> { // send notice to each member
                     messagingTemplate.convertAndSendToUser(id, "/topic/messages", messResponse);
-
                 });
 
             }

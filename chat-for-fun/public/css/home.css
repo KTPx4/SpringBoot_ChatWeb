@@ -33,7 +33,19 @@
 .main-sider.ant-layout-sider-dark{
         border: 1px solid #696f93 !important;
 }
+.modal-light .ant-modal-content {
+    background: #fbfbfb;
+    .ant-modal-header {
 
+        background: transparent !important;
+    }
+}
+.modal-dark .ant-modal-content {
+    background: #696f93;
+    .ant-modal-header{
+        background: transparent !important;
+    }
+}
 
 
 .ant-layout-sider-light .ant-layout-sider-children,

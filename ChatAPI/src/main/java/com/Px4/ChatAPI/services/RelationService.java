@@ -669,6 +669,7 @@ public class RelationService {
 
         GroupChatItem grI = new GroupChatItem(gr);
         grI.addMessage(messCreate);
+        grI.setSettings(grSetting);
 
         return grI;
     }

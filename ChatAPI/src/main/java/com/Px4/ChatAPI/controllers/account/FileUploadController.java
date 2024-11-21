@@ -4,6 +4,7 @@ import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
 import com.Px4.ChatAPI.controllers.requestParams.account.UpdateParams;
 import com.Px4.ChatAPI.services.AccountService;
+import com.Px4.ChatAPI.services.GroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -44,15 +45,21 @@ public class FileUploadController {
     private static final List<String> ALLOWED_FILE_TYPES = Arrays.asList("jpg", "jpeg", "png");
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private GroupService groupService;
 
     @PostMapping()
-    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file , @RequestParam(value = "token") String token) {
+    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file ,
+                                             @RequestParam(value = "token") String token,
+                                             @RequestParam(value = "group", defaultValue = "") String group)
+    {
         try{
             String id = jwtUtil.extractID(token);
             if(id == null || id.isEmpty())
             {
                 return new  ResponseEntity<>("Please login", HttpStatus.UNAUTHORIZED);
             }
+
             String fileName = StringUtils.cleanPath(file.getOriginalFilename());
             String fileExtension = getFileExtension(file);
 
@@ -62,16 +69,26 @@ public class FileUploadController {
             }
 
             String idUser = id;
+            if(!group.isEmpty())
+            {
+                idUser = group;
+            }
             String SERVER = protocol + "://" + host + ":" + port;
 
             String newFileName = idUser + "." + fileExtension;
             Path path = Paths.get(uploadDir + File.separator + newFileName);
-
             Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-            UpdateParams updateAcc = new UpdateParams();
-            updateAcc.setAvatar(SERVER + "/avt/" + newFileName);
 
-            accountService.updateAccount(idUser, updateAcc);
+            UpdateParams updateAcc = new UpdateParams();
+            String pathAVT = SERVER + "/avt/" + newFileName;
+            updateAcc.setAvatar(pathAVT);
+            if(group.isEmpty())
+            {
+                accountService.updateAccount(idUser, updateAcc);
+            }
+            else{
+                groupService.updateAvt(group, pathAVT);
+            }
 
 
             String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -79,7 +96,8 @@ public class FileUploadController {
                     .path(idUser)
                     .toUriString();
 
-            return ResponseEntity.ok("File uploaded successfully: " + fileDownloadUri);
+            return ResponseEntity.ok(pathAVT);
+
         }
         catch (Exception e)
         {
