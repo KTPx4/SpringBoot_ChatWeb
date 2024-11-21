@@ -1,6 +1,5 @@
 package com.Px4.ChatAPI.controllers.socket;
-import com.Px4.ChatAPI.models.message.MessageRequest;
-import com.Px4.ChatAPI.models.message.MessageResponse;
+import com.Px4.ChatAPI.controllers.requestParams.chat.MessageResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;

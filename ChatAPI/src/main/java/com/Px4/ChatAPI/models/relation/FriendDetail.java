@@ -1,5 +1,7 @@
 package com.Px4.ChatAPI.models.relation;
 
+import com.Px4.ChatAPI.models.Px4Generate;
+import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.message.MessageModel;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,12 +34,19 @@ public class FriendDetail {
     @Getter
     @Setter
     private boolean isFriend;
-
+    @Getter
+    @Setter
+    private String groupId;
     @Getter
     @Setter
     private List<MessageModel> listMessage;
 
+    @Getter
+    @Setter
+    private int count;
+
     public FriendDetail() {
+        this.count = 0;
     }
 
     public FriendDetail(String id, String name, String userProfile, String avatar, String status, String createdAt, String type, boolean isFriend) {
@@ -49,7 +58,20 @@ public class FriendDetail {
         this.createdAt = createdAt;
         this.type = type;
         this.isFriend = isFriend;
+        this.count =0;
 
+    }
+    public FriendDetail(AccountModel account, FriendModel friend)
+    {
+        this.id = account.getId();
+        this.name = account.getName();
+        this.userProfile = account.getUserProfile();
+        this.avatar = account.getImage();
+        this.status = friend.getStatus();
+        this.createdAt = Px4Generate.toHCMtime(friend.getCreatedAt());
+        this.type = friend.getType();
+        this.isFriend = friend.getIsFriend();
+        this.count = 0;
     }
 
 

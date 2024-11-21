@@ -6,38 +6,40 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Document("messages")
+@Getter
+@Setter
 public class MessageModel {
     @Id
-    @Getter
-    @Setter
+
     private String id;
-    @Getter
-    @Setter
+
     private String idConversation;
-    @Getter
-    @Setter
+
     private String sender;
-    @Getter
-    @Setter
+    private String senderName;
+
+    private String avatar;
+
     private String reply;
-    @Getter
-    @Setter
+
     private String content;
-    @Getter
-    @Setter
+
     private String contentType;
-    @Getter
-    @Setter
+
     private Date createdAt;
-    @Getter
-    @Setter
+
     private boolean isSystem;
-    @Getter
-    @Setter
+
     private boolean isDeleted;
+
+    private boolean isSeen;
+
+    List<String> whoSeen;
 
     public MessageModel(String idConversation, String sender, String contentType, String content)
     {
@@ -48,10 +50,29 @@ public class MessageModel {
         this.reply = "";
         this.createdAt = Date.from(Instant.now());
         this.isSystem = false;
+        this.isSeen = false;
         this.isDeleted = false;
+        this.whoSeen = new ArrayList<>();
+    }
+    public MessageModel(String idConversation, String sender, String contentType, String content, boolean isSystem)
+    {
+        this.idConversation = idConversation;
+        this.sender = sender;
+        this.contentType = contentType; // text, image, file
+        this.content = content;
+        this.reply = "";
+        this.createdAt = Date.from(Instant.now());
+        this.isSystem = isSystem;
+        this.isSeen = false;
+        this.isDeleted = false;
+        this.whoSeen = new ArrayList<>();
     }
     public MessageModel()
     {
+        this.isSystem = false;
+        this.isDeleted = false;
+        this.isSeen = false;
+        this.whoSeen = new ArrayList<>();
 
     }
 
@@ -65,6 +86,8 @@ public class MessageModel {
         this.createdAt = Date.from(Instant.now());
         this.isSystem = false;
         this.isDeleted = false;
+        this.isSeen = false;
+        this.whoSeen = new ArrayList<>();
     }
 
 }

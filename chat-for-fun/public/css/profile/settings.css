@@ -1,0 +1,40 @@
+
+.header{
+    height: 15%;
+    padding: 6px;
+
+}
+.header .display{
+    padding: 0;
+    p, h4 {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}
+.btn-profile{
+    height: 40px;
+    border-radius: 10px;
+}
+
+.pass-input input{
+    margin: 6px 4px !important;
+}
+
+
+
+
+
+.body{
+    height: 75%;
+    width: 100%;
+}
+.body .body-left{
+    width: 20%;
+    height: 100%;
+
+
+}
+.body .body-right{
+    width: 20%;
+    height: 100%;
+}

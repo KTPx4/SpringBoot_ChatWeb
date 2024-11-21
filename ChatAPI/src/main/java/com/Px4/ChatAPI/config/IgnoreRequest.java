@@ -10,6 +10,9 @@ public class IgnoreRequest {
     private static List<String> ignoreList = Arrays.asList(
             "/ws",
             "/ws/**",
+            "/avt/**",
+            "/avt/",
+            "/api/v1/upload",
             "/api/v1/account/login",
             "/api/v1/account/register",
             "/api/v1/account/reset"
