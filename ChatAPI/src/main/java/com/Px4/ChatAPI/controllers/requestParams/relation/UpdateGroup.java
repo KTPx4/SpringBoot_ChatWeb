@@ -12,10 +12,12 @@ public class UpdateGroup {
     private List<String> addMembers = new ArrayList<String>();
     private List<String> removeMembers = new ArrayList<String>();
     private List<String> canSend = new ArrayList<String>();
-    private List<String> deputy = new ArrayList<String>();
+    private List<String> addDeputy = new ArrayList<String>();
+    private List<String> removeDeputy = new ArrayList<String>();
     private String leader;
     private String name;
     private String permis;
+
 
     public UpdateGroup() {}
 

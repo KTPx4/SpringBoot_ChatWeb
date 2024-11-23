@@ -13,6 +13,7 @@ public class IgnoreRequest {
             "/avt/**",
             "/avt/",
             "/api/v1/upload",
+            "/api/v1/file",
             "/api/v1/account/login",
             "/api/v1/account/register",
             "/api/v1/account/reset"

@@ -2,14 +2,29 @@
 import React, {useContext, useEffect, useRef, useState} from "react";
 import useStore from "../../../store/useStore";
 import {ThemeContext} from "../../../ThemeContext";
-import {Avatar, Button, Card, Drawer, Image, Input, Layout, List, Popover, Switch, Tooltip} from "antd";
+import {
+    Avatar,
+    Button,
+    Card,
+    Drawer,
+    Image,
+    Input,
+    Layout,
+    List, message,
+    Modal,
+    Popconfirm,
+    Popover,
+    Switch,
+    Tooltip
+} from "antd";
 import {
     CheckCircleTwoTone,
     EyeTwoTone,
     MoreOutlined,
     PlusOutlined,
     SendOutlined,
-    SmileOutlined
+    SmileOutlined,
+    FileOutlined, MinusCircleTwoTone
 } from "@ant-design/icons";
 import EmojiPicker from "emoji-picker-react";
 import useHCMTime from "../../../hooks/useHCMTime";
@@ -18,7 +33,17 @@ import axios from "axios";
 
 const { Header, Content, Footer, Sider } = Layout;
 
-const ContentCenter = ({Scroll, messageApi, currentSelected, sendMess, newMessage, sendPermis,openModal})=>{
+const ContentCenter = ({
+                           Scroll,
+                           messageApi,
+                           currentSelected,
+                           sendMess,
+                           newMessage,
+                           sendPermis,
+                           openModal ,
+                           loadMess,
+                           handleRemove
+})=>{
     const SERVER = process.env.REACT_APP_SERVER || 'http://localhost:8080/api/v1';
     const token = localStorage.getItem('token-auth') || '';
     const {id, setId} = useStore()
@@ -28,6 +53,7 @@ const ContentCenter = ({Scroll, messageApi, currentSelected, sendMess, newMessag
     const themeName = currentTheme.getKey();
     const contentColor = currentTheme.getContent()
     const textColor = currentTheme.getText();
+    const hintColor = currentTheme.getHint();
     const sliderColor = currentTheme.getKey().split("_")[1];
     const borderColor = currentTheme.getBorder()
     const cardSelectedColor = currentTheme.cardSelected
@@ -52,7 +78,9 @@ const ContentCenter = ({Scroll, messageApi, currentSelected, sendMess, newMessag
     useEffect(() => {
         if(newMessage && newMessage.sender === myId)
         {
-
+            // var dtM = dataMess
+            // dtM.push(newMessage)
+             //setDataMess( dtM)
             const content = newMessage.content;
 
             // Lọc ra các phần tử không khớp với điều kiện
@@ -62,7 +90,11 @@ const ContentCenter = ({Scroll, messageApi, currentSelected, sendMess, newMessag
             setlistWaitSend(updatedList);
 
         }
-        else if(newMessage && !waitScroll)
+        // if(newMessage)
+        // {
+        //     setDataMess((prev) => [...prev, newMessage]);
+        // }
+        if(newMessage && !waitScroll)
         {
             if (messagesEndRef.current ) {
                 messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -78,16 +110,29 @@ const ContentCenter = ({Scroll, messageApi, currentSelected, sendMess, newMessag
         {
             setDataMess(currentSelected.messages)
             setValuePermiss(currentSelected.allPermit)
+            if(dataMess && messagesEndRef.current && !waitScroll )
+            {
+                messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
         }
     }, [currentSelected])
 
     useEffect(()=>{
-        if(dataMess && messagesEndRef.current )
+        if(dataMess && messagesEndRef.current && !waitScroll )
         {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-
         }
     }, [dataMess])
+
+    useEffect(()=>{
+        if(loadMess && currentSelected )
+        {
+            setWaitScroll(true);
+            var newDataMess = [...loadMess, ...dataMess]
+
+            setDataMess(newDataMess)
+        }
+    }, [loadMess])
 
     const sendServer= async (action, method, data)=>{
         try {
@@ -135,7 +180,7 @@ const ContentCenter = ({Scroll, messageApi, currentSelected, sendMess, newMessag
         var lsWait = listWaitSend
         lsWait.push(inputValue)
         setlistWaitSend(lsWait)
-
+        setWaitScroll(false)
         sendMess(inputValue , (type, mess)=>{
             if(type === "error")
             {
@@ -214,6 +259,14 @@ const ContentCenter = ({Scroll, messageApi, currentSelected, sendMess, newMessag
                 <Button className="m-1">Image</Button>
             </div>
     )
+
+
+    const confirmDelMember = (id) => {
+
+        handleRemove(currentSelected?.id, [id])
+
+        // message.success('Click on Yes');
+    };
     const ContentDrawer =(
         <div style={{width: "100%", display: "flex", justifyContent: "center", flexDirection: "column"}}>
             {(currentSelected?.allPermit === true || currentSelected?.deputy?.includes(myId) || currentSelected?.leaderId === myId) && (
@@ -224,30 +277,55 @@ const ContentCenter = ({Scroll, messageApi, currentSelected, sendMess, newMessag
                             <p style={{color: textColor}}>All Permission</p>
                         </div>
                     )}
-
-                    <Button
-                        onClick={() => openModal.Name()}
-                        style={{background: "transparent", border: "none", color: textColor}}
-                        className="mb-3 group-btn-drawer"
-                    >Change Name</Button>
                     <Button
                         onClick={()=> openModal.Upload()}
                         style={{background: "transparent", border: "none", color: textColor}}
                         className="mb-3 group-btn-drawer"
                     >Change Avatar</Button>
+                    <Button
+                        onClick={() => openModal.Name()}
+                        style={{background: "transparent", border: "none", color: textColor}}
+                        className="mb-3 group-btn-drawer"
+                    >Change Name</Button>
+
 
                 </>
             )}
             <Button
+                onClick={()=> openModal.People()}
                 style={{background: "transparent", border: "none", color: textColor}}
                 className="mb-3 group-btn-drawer"
-            >People</Button>
+            >Members</Button>
+
+            <Popconfirm
+                title="Leave group"
+                description="Are you sure to leave this group?"
+                onConfirm={() => confirmDelMember(myId)}
+                // onCancel={cancelDelMember}
+                okText="Yes"
+                cancelText="No"
+            >
+                <Button
+                    onClick={()=> openModal.Leave()}
+                    style={{background: "transparent", border: "none", color: "red"}}
+                    className="mb-3 group-btn-drawer"
+                >Leave</Button>
+            </Popconfirm>
+
         </div>
     )
 
     var canSend = true;
     if (currentSelected && currentSelected?.canSend?.length > 0) {
         canSend = currentSelected.canSend.includes(myId)
+    }
+    if( currentSelected && !currentSelected?.members.includes(myId))
+    {
+        return (
+            <>
+                <Alert variant="warning" className="d-flex justify-content-center"> You has been leave this group!</Alert>
+            </>
+        )
     }
 
     return (
@@ -259,18 +337,24 @@ const ContentCenter = ({Scroll, messageApi, currentSelected, sendMess, newMessag
                 {ContentDrawer}
             </Drawer>
 
+
             {currentSelected && (
                 <Layout style={{
                     height: "100%",
 
                     background: "transparent",
                 }}>
-                    <Header className="content-header" style={{background: "transparent", display: "flex", flexDirection: "row", alignItems: "center",justifyContent: "space-between", paddingTop: 10}}>
+                    <Header className="content-header"
+                            style={{
+                                background: "transparent",
+                                display: "flex", flexDirection: "row", alignItems: "center",justifyContent: "space-between",
+                                paddingTop: 20}}
+                    >
 
                         <div style={{display: "flex", flexDirection: "row"}}>
                             <Avatar src={currentSelected.avatar} size={50}/>
 
-                            <Card style={{height: "100%", padding: "0 !important", background: "transparent", border: "none"}}>
+                            <Card style={{top: -10,height: "100%", padding: "0 !important", background: "transparent", border: "none"}}>
                                 <Card.Meta
                                     title={
                                         <h4 style={{color: textColor, margin: 0, padding: "2px 0"}}>
@@ -288,55 +372,124 @@ const ContentCenter = ({Scroll, messageApi, currentSelected, sendMess, newMessag
                         {currentSelected && (
                             <>
                                 {dataMess.map((item, index)=>{
+                                    console.log(item)
+                                    var isSystem = (item.system === true || item.isSystem === true)
                                         if (item.contentType === "text") {
                                             return (
                                                 <div
-                                                    key={item.id + Date.now()}
+                                                    key={item.id}
                                                     className={ `message 
-                                                    ${(item.sender === myId ) ? "message-me" : "message message-friend"} 
-                                                     ${(item.system === true) ? "message-server" : ""} 
-                                                    ${(page > 1 &&  index % (15) === 0 ) ? "message-border" : ""}
-                                                `}
+                                                        ${( isSystem ? "message-server" : (item.sender === myId  ? "message-me" : "message-friend") ) } 
+                                                        ${(page > 1 &&  index % (15) === 0 ) ? "message-border" : ""} `
+                                                    }
                                                 >
                                                     <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
-                                                        <Tooltip title={item.senderName} >
-                                                            <Avatar style={{width: 25, height: 25, visibility: item.sender === myId? "hidden" : "visible"}} src={item.avatar} />
-                                                        </Tooltip>
+                                                        {!isSystem && (
+                                                            <Tooltip title={item.senderName} >
+                                                                <Avatar style={{width: 25, height: 25, visibility: item.sender === myId? "hidden" : "visible"}} src={item.avatar} />
+                                                            </Tooltip>
+                                                        )}
                                                         <Tooltip  title={item.createdAt && convertToHCMTime(item.createdAt)}>
-                                                            <p>{item.content}</p>
+                                                            <p style={{color: isSystem ? (item.content.includes("deleted") ?  "red" : hintColor) : textColor}}>{item.content}</p>
                                                         </Tooltip>
                                                     </div>
                                                 </div>
 
                                             );
-                                        } else if (item.contentType === "image") {
+                                        }
+                                        else if (item.contentType === "image") {
+                                            var link = `${SERVER}/file?token=${token}&group=${currentSelected.id}&id=${item.id}`
                                             return (
                                                 <div
+                                                    key={item.id}
                                                     style={{
                                                         backgroundColor: loading || item.error ? 'lightgrey' : 'transparent',
-                                                        maxWidth: 300,
+                                                        width: "100%",
                                                         maxHeight: 400,
                                                         display: 'flex',
                                                         alignItems: 'center',
-                                                        justifyContent: 'center'
+                                                        justifyContent: 'center',
+                                                        margin: "5px 0 "
                                                     }}
-                                                    key={item.id + "img"}
-                                                    className={item.sender === myId ? "message message-me" : "message message-friend"}
+
+                                                    className={item.sender === myId ? "message img message-me" : "message img message-friend"}
                                                 >
-                                                    <Tooltip  title={convertToHCMTime(item.createdAt??"")}>
-                                                        <Image
-                                                            alt="Image"
-                                                            src={item.content}
-                                                            style={{ display: loading ? 'none' : 'block' }}
-                                                            onLoad={handleLoad}
-                                                            onError={handleError}
-                                                        />
-                                                        {loading && <span style={{ height: 300, width: 200, textAlign: "center", display: "flex", alignItems: "center" }}>Loading...</span>}
-                                                        {error && <span style={{ height: 300, width: 200, textAlign: "center", display: "flex", alignItems: "center" }}>Error loading image</span>}
-                                                    </Tooltip>
+                                                    <div style={{
+                                                        display: "flex",
+                                                        flexDirection: "row",
+                                                        alignItems: "flex-end"
+                                                    }}>
+                                                        {!isSystem && (
+                                                            <Tooltip title={item.senderName}>
+                                                                <Avatar style={{
+                                                                    width: 25,
+                                                                    height: 25,
+                                                                    visibility: item.sender === myId ? "hidden" : "visible"
+                                                                }} src={item.avatar}/>
+                                                            </Tooltip>
+                                                        )}
+                                                        <Tooltip style={{}} title={convertToHCMTime(item.createdAt ?? "")}>
+                                                            <Image
+                                                                alt="Image"
+                                                                src={link}
+                                                                style={{display: loading ? 'none' : 'block'}}
+                                                                onLoad={handleLoad}
+                                                                onError={handleError}
+                                                            />
+                                                            {loading && <span style={{
+                                                                height: 300,
+                                                                width: 200,
+                                                                textAlign: "center",
+                                                                display: "flex",
+                                                                alignItems: "center"
+                                                            }}>Loading...</span>}
+                                                            {/*{error && <span style={{ height: 300, width: 200, textAlign: "center", display: "flex", alignItems: "center" }}>Error loading image</span>}*/}
+                                                        </Tooltip>
+                                                    </div>
+
                                                 </div>
                                             );
                                         }
+                                        // Xử lý loại nội dung "file"
+                                        else if (item.contentType === "file") {
+                                            var fileLink = `${SERVER}/file?token=${token}&group=${currentSelected.id}&id=${item.id}`;
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    className={`file message ${item.sender === myId ? "message-me" : "message-friend"}`}
+                                                    style={{marginTop: 10 ,display: "flex", flexDirection: "row",  alignItems: "flex-end"}}
+                                                >
+                                                    {!isSystem && (
+                                                        <Tooltip title={item.senderName}>
+                                                            <Avatar style={{
+                                                                width: 25,
+                                                                height: 25,
+                                                                visibility: item.sender === myId ? "hidden" : "visible"
+                                                            }} src={item.avatar}/>
+                                                        </Tooltip>
+                                                    )}
+                                                    <Tooltip title={convertToHCMTime(item.createdAt ?? "")}>
+                                                        <a
+                                                            href={fileLink}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            style={{
+                                                                color: textColor,
+                                                                textDecoration: "underline",
+                                                                wordBreak: "break-word",
+                                                            }}
+
+                                                        >
+                                                            <FileOutlined className="mx-2"/>
+                                                            {item.content || "Download File"}
+                                                        </a>
+                                                    </Tooltip>
+
+                                                </div>
+                                            );
+                                        }
+
+
                                         return null;
                                 })}
 
@@ -346,10 +499,10 @@ const ContentCenter = ({Scroll, messageApi, currentSelected, sendMess, newMessag
                                             style={{
                                                 color: textColor,
                                             }}
-                                            key={item+"wait"}
+                                            key={item + "wait"}
                                             className="message-wait message message-me"
                                         >
-                                            <p    key={item+"mess"}>{item}</p>
+                                            <p key={item + "mess"}>{item}</p>
                                         </div>)
                                 })}
 
@@ -382,9 +535,9 @@ const ContentCenter = ({Scroll, messageApi, currentSelected, sendMess, newMessag
                     {canSend && (
                         <Footer style={{height: "7%", width: "100%", background: "transparent", display: "flex", alignItems: "center"}}>
 
-                            <Popover content={contentAddFile} trigger="hover">
-                                <Button className="btn-addFile" style={{color: "grey"}} icon={<PlusOutlined/>}/>
-                            </Popover>
+                            {/*<Popover content={contentAddFile} trigger="hover">*/}
+                            {/*</Popover>*/}
+                            <Button  onClick={() => openModal.File()} className="btn-addFile" style={{color: "grey"}} icon={<PlusOutlined/>}/>
 
                             <div className="input-mess"
                                  style={{position: 'relative', display: "inline-block", width: "100%" , marginLeft: 10}}>

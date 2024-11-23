@@ -9,7 +9,7 @@ import axios from "axios";
 import Spinner from 'react-bootstrap/Spinner';
 const SERVER = process.env.REACT_APP_SERVER || 'http://localhost:8080/api/v1';
 
-const RegisterFragment = ({afterRegister, openNotification}) => {
+const RegisterFragment = ({afterRegister, openNotification, openForgot}) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [email, setEmail] = useState('');
@@ -86,8 +86,8 @@ const RegisterFragment = ({afterRegister, openNotification}) => {
                         :
                         <button style={{background: "#6CB4EE"}} type="submit" className="login-button">SEND</button>}
                 </form>
+                <button onClick={openForgot}  style={{border: "none", background: "transparent",color: "black", fontSize: 14, marginTop: 15}}>Forgot password</button>
             </div>
-
             {/* Container cho các lớp sóng */}
             <WaveFragment isLogin={false}/>
         </>

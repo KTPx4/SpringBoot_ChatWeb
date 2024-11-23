@@ -1,6 +1,5 @@
 package com.Px4.ChatAPI.controllers.account;
 
-import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
 import com.Px4.ChatAPI.controllers.jwt.JwtUtil;
 import com.Px4.ChatAPI.controllers.requestParams.account.UpdateParams;
 import com.Px4.ChatAPI.services.AccountService;
@@ -36,8 +35,6 @@ public class FileUploadController {
     @Value("${spring.application.port}")
     private String port;
 
-    @Autowired
-    JwtRequestFilter jwtRequestFilter;
     @Autowired
     AccountService accountService;
 
@@ -106,6 +103,7 @@ public class FileUploadController {
 
 
     }
+
 
     public static String getFileExtension(MultipartFile file) {
         String fileName = file.getOriginalFilename();

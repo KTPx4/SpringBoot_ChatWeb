@@ -1,12 +1,20 @@
 import React, {useState, useContext, useEffect, useRef} from 'react';
 import ListChat from "./ListChat";
-import {Avatar, Button, Image, Input, Layout, message, Popover, Result, Tooltip} from "antd";
+import {Avatar, Button, Image, Input, Layout, message, Modal, Popover, Result, Tooltip, Upload} from "antd";
 import SliderHead from "./SliderHead";
 
 import {
     PhoneOutlined,
-    FileUnknownOutlined,EyeTwoTone,
-    MoreOutlined, SmileOutlined, PlusOutlined, SendOutlined, CheckCircleOutlined, EyeOutlined, CheckCircleTwoTone
+    FileUnknownOutlined,
+    EyeTwoTone,
+    MoreOutlined,
+    SmileOutlined,
+    PlusOutlined,
+    SendOutlined,
+    CheckCircleOutlined,
+    EyeOutlined,
+    CheckCircleTwoTone,
+    FileOutlined, InboxOutlined
 } from '@ant-design/icons';
 
 import {ThemeContext} from "../../ThemeContext";
@@ -20,6 +28,7 @@ import {Alert} from "react-bootstrap";
 import Spinner from "react-bootstrap/Spinner";
 
 const { Header, Content, Footer, Sider } = Layout;
+const { Dragger } = Upload;
 
 const TYPE_FRIEND = {
     none: "non",
@@ -42,6 +51,7 @@ const ChatComponent = ({socketHandler}) =>{
     const themeName = currentTheme.getKey();
     const contentColor = currentTheme.getContent()
     const textColor = currentTheme.getText();
+    const hintColor = currentTheme.getHint();
     const sliderColor = currentTheme.getKey().split("_")[1];
     const borderColor = currentTheme.getBorder()
     const cardSelectedColor = currentTheme.cardSelected
@@ -82,7 +92,68 @@ const ChatComponent = ({socketHandler}) =>{
     const [messageApi, contextHolder2] = message.useMessage();
 
     const [loadingStatus, setStatusLoading] = useState(false)
+    const [isModalFile, setIsModalFile] = useState(false)
 
+    const openModal = {
+        File: () => setIsModalFile(true)
+    }
+    const propsFile = {
+        name: 'file',
+        multiple: false,
+        action: `${SERVER}/file?token=${token}&group=${selectedCard?.groupId ?? "-1"}`,
+        beforeUpload: (file) => {
+            // Các loại file được phép
+            const allowedExtensions = [
+                "jpg", "jpeg", "png",
+                "zip", "rar", "txt",
+                "docx", "xlsx", "ppt", "pptx"
+            ];
+
+            // Lấy phần mở rộng của file
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+
+            // Kiểm tra loại file
+            const isAllowedFileType = allowedExtensions.includes(fileExtension);
+            if (!isAllowedFileType) {
+                message.error(`You can only upload files with extensions: ${allowedExtensions.join(", ")}`);
+                return false;
+            }
+
+            // Kiểm tra kích thước file
+            const isLt30M = file.size / 1024 / 1024 < 30;
+            if (!isLt30M) {
+                message.error('File must be smaller than 30MB!');
+                return false;
+            }
+
+            return isAllowedFileType && isLt30M;
+        },
+        onChange(info) {
+            const { status } = info.file;
+            console.log(status)
+            if (status !== 'uploading') {
+                console.log('Uploading file:', info.file);
+            }
+            if (status === 'done') {
+                message.success(`${info.file.name} file uploaded successfully.`);
+                var messId = info.file.response.data.id;
+                socketHandler.sendFile(selectedCard?.id, messId)
+                // const newLink = info.file.response + `?t=${Date.now()}`;
+                // const curr = { ...currentSelected, avatar: newLink };
+                // setCurrentSelected(curr);
+                //
+                // const updatedDataGroup = dataGroup.map((gr) =>
+                //     gr.id === curr.id ? curr : gr
+                // );
+                // setDataGroup(updatedDataGroup);
+            } else if (status === 'error') {
+                message.error(`${info.file.name} file upload failed.`);
+            }
+        },
+        onDrop(e) {
+            console.log('Dropped files', e.dataTransfer.files);
+        },
+    };
     useEffect(() => {
         const token = localStorage.getItem('token-auth');
 
@@ -350,7 +421,7 @@ const ChatComponent = ({socketHandler}) =>{
                     <div style={{width: "100%", display: "flex", justifyContent: "space-between", padding: "10px 25px 5px 0px"}}>
                         <h3 style={{color: textColor, display: "flex", justifyContent: "center", alignItems:"center"}}>{selectedCard.name}</h3>
                         <div>
-                            <PhoneOutlined className="btn-call" style={{ color: textColor,fontSize: 30, marginRight: 30 }} />
+                            <PhoneOutlined className="btn-call" style={{display: "none", color: textColor,fontSize: 30, marginRight: 30 }} />
                             {selectedCard.status?.toLowerCase() !== STATUS_FRIEND.blockedBy && (
                                 <Tooltip title={childMore} placement="bottomLeft" color={"white"}>
                                     <MoreOutlined className="btn-more" style={{ color: textColor,fontSize: 30 }} />
@@ -381,6 +452,21 @@ const ChatComponent = ({socketHandler}) =>{
                       rel="stylesheet"
                       type="text/css"/>
             </Helmet>
+            <Modal
+                className={`modal-${themeName === "theme_dark" ? "dark" : "light"} Modal-File`}
+                onCancel={()=>setIsModalFile(false)}
+                open={isModalFile} footer={null}
+            >
+                <Dragger className="p-2" {...propsFile}>
+                    <p className="ant-upload-drag-icon">
+                        <InboxOutlined />
+                    </p>
+                    <p style={{color: textColor}}  className="ant-upload-text">Click or drag file to this area to upload</p>
+                    <p style={{color: hintColor}} className="ant-upload-hint">
+                        Select an image less than 30mb
+                    </p>
+                </Dragger>
+            </Modal>
             <Sider
                 theme={sliderColor}
                  width={350}
@@ -440,7 +526,7 @@ const ChatComponent = ({socketHandler}) =>{
                         ) : (
                             <>
                                 {listMessage.map((item, index) => {
-
+                                    var isSystem = (item.system === true || item.isSystem === true)
                                     if (item.contentType === "text") {
                                         return (
 
@@ -458,34 +544,101 @@ const ChatComponent = ({socketHandler}) =>{
                                             </div>
 
                                         );
-                                    } else if (item.contentType === "image") {
+                                    }
+
+                                    else if (item.contentType === "image") {
+                                        var link = `${SERVER}/file?token=${token}&group=${selectedCard.groupId}&id=${item.id}`
                                         return (
                                             <div
+                                                key={item.id}
                                                 style={{
                                                     backgroundColor: loading || item.error ? 'lightgrey' : 'transparent',
-                                                    maxWidth: 300,
+                                                    width: "100%",
                                                     maxHeight: 400,
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    justifyContent: 'center'
+                                                    justifyContent: 'center',
+                                                    margin: "5px 0 "
                                                 }}
-                                                key={item.id + "img"}
-                                                className={item.sender === myId ? "message message-me" : "message message-friend"}
+
+                                                className={item.sender === myId ? "message img message-me" : "message img message-friend"}
                                             >
-                                                <Tooltip  title={convertToHCMTime(item.createdAt??"")}>
-                                                    <Image
-                                                        alt="Image"
-                                                        src={item.content}
-                                                        style={{ display: loading ? 'none' : 'block' }}
-                                                        onLoad={handleLoad}
-                                                        onError={handleError}
-                                                    />
-                                                    {loading && <span style={{ height: 300, width: 200, textAlign: "center", display: "flex", alignItems: "center" }}>Loading...</span>}
-                                                    {error && <span style={{ height: 300, width: 200, textAlign: "center", display: "flex", alignItems: "center" }}>Error loading image</span>}
-                                                </Tooltip>
+                                                <div style={{
+                                                    display: "flex",
+                                                    flexDirection: "row",
+                                                    alignItems: "flex-end"
+                                                }}>
+                                                    {!isSystem && (
+                                                        <Tooltip title={item.senderName}>
+                                                            <Avatar style={{
+                                                                width: 25,
+                                                                height: 25,
+                                                                visibility: item.sender === myId ? "hidden" : "visible"
+                                                            }} src={item.avatar}/>
+                                                        </Tooltip>
+                                                    )}
+                                                    <Tooltip style={{}} title={convertToHCMTime(item.createdAt ?? "")}>
+                                                        <Image
+                                                            alt="Image"
+                                                            src={link}
+                                                            style={{display: loading ? 'none' : 'block'}}
+                                                            onLoad={handleLoad}
+                                                            onError={handleError}
+                                                        />
+                                                        {loading && <span style={{
+                                                            height: 300,
+                                                            width: 200,
+                                                            textAlign: "center",
+                                                            display: "flex",
+                                                            alignItems: "center"
+                                                        }}>Loading...</span>}
+                                                        {/*{error && <span style={{ height: 300, width: 200, textAlign: "center", display: "flex", alignItems: "center" }}>Error loading image</span>}*/}
+                                                    </Tooltip>
+                                                </div>
+
                                             </div>
                                         );
                                     }
+                                    // Xử lý loại nội dung "file"
+                                    else if (item.contentType === "file") {
+                                        var fileLink = `${SERVER}/file?token=${token}&group=${selectedCard.groupId}&id=${item.id}`;
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                className={`file message ${item.sender === myId ? "message-me" : "message-friend"}`}
+                                                style={{marginTop: 10 ,display: "flex", flexDirection: "row",  alignItems: "flex-end"}}
+                                            >
+                                                {!isSystem && (
+                                                    <Tooltip title={item.senderName}>
+                                                        <Avatar style={{
+                                                            width: 25,
+                                                            height: 25,
+                                                            visibility: item.sender === myId ? "hidden" : "visible"
+                                                        }} src={item.avatar}/>
+                                                    </Tooltip>
+                                                )}
+                                                <Tooltip title={convertToHCMTime(item.createdAt ?? "")}>
+                                                    <a
+                                                        href={fileLink}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        style={{
+                                                            color: textColor,
+                                                            textDecoration: "underline",
+                                                            wordBreak: "break-word",
+                                                        }}
+
+                                                    >
+                                                        <FileOutlined className="mx-2"/>
+                                                        {item.content || "Download File"}
+                                                    </a>
+                                                </Tooltip>
+
+                                            </div>
+                                        );
+                                    }
+
+
                                     return null;
                                 })}
                                 {listWaitSend.map((item, index) => {
@@ -526,9 +679,9 @@ const ChatComponent = ({socketHandler}) =>{
                     )}
                     {isCanSend && selectedCard && (
                         <Footer style={{background: "transparent", textAlign: 'center', display: "flex",}}>
-                            <Popover content={contentAddFile} trigger="hover">
-                                <Button className="btn-addFile" style={{color: textColor}} icon={<PlusOutlined/>}/>
-                            </Popover>
+                            {/*<Popover content={contentAddFile} trigger="hover">*/}
+                            {/*</Popover>*/}
+                                <Button onClick={() => openModal.File()} className="btn-addFile" style={{color: textColor}} icon={<PlusOutlined/>}/>
                             <div className="input-mess"
                                  style={{position: 'relative', display: "inline-block", width: "100%"}}>
                                 {showPicker && (

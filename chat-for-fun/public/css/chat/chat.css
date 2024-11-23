@@ -43,6 +43,16 @@
     background: #a6a4a4; /* Màu của phần cuộn */
     border-radius: 10px; /* Bo góc thanh cuộn */
 }
+.theme_light{
+    h4, p{
+        color: Black !important;
+    }
+}
+.theme_dark{
+    h4, p{
+        color: white !important;
+    }
+}
 
 .message p{
     width: fit-content;
@@ -58,26 +68,34 @@
 .message .ant-image{
     width: fit-content !important;
 }
-.theme_light{
-    h4, p{
-        color: Black !important;
-    }
-}
-.theme_dark{
-    h4, p{
-        color: white !important;
-    }
-}
 
-
-.ant-layout-content .message-me{
-    display: flex;
-    justify-content: flex-end;
-    p{
-        background: #2f99f0;
+.img span{
+    max-width: 300px;
+}
+.message.img.message-me {
+    justify-content: end !important;
+}
+.message.img.message-friend {
+    justify-content: start !important;
+}
+.file.message{
+    a{
+        border-radius: 16px;
         display: flex;
+        align-items: center;
         max-width: 300px !important;
         line-break: anywhere;
+        padding: 10px;
+    }
+}
+.file.message.message-me{
+    a{
+        background: #2f99f0;
+    }
+}
+.file.message.message-friend{
+    a{
+        background: rgba(70, 114, 154, 0.93);
     }
 }
 
@@ -112,6 +130,22 @@
         display: flex;
         max-width: 300px !important;
         line-break: anywhere;
+    }
+}
+
+.ant-layout-content .message-server{
+    display: flex;
+    /*justify-content: flex-end;*/
+    justify-content: center;
+    p{
+        background: none;
+        display: flex;
+        /* max-width: 300px !important; */
+        line-break: anywhere;
+        width: 100%;
+        justify-content: center;
+
+
     }
 }
 

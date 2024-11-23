@@ -26,7 +26,7 @@ public class GroupSettingModel {
     private String leaderId;
     @Getter
     @Setter
-    private List<String>  deputy;
+    private List<String>  deputy = new ArrayList<>();
     @Getter
     @Setter
     private Date createdAt;
@@ -35,7 +35,7 @@ public class GroupSettingModel {
     private boolean isAllPermit;
     @Getter
     @Setter
-    private List<String> canSend;
+    private List<String> canSend = new ArrayList<>();
 
     public GroupSettingModel(String groupId, String leader){
         this.groupId = groupId;
@@ -54,6 +54,9 @@ public class GroupSettingModel {
         this.isAllPermit = true;
         this.canSend = new ArrayList<>();
     }
-
+    public void addDeputy(List<String> deputy)
+    {
+        this.deputy.addAll(deputy);
+    }
 
 }
