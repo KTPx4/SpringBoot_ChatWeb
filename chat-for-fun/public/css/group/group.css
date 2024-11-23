@@ -28,8 +28,39 @@
 .message-border {
     border-top: 1px solid #e8e8e8;
 }
+
 .message .ant-image{
     width: fit-content !important;
+}
+
+.img span{
+    max-width: 300px;
+}
+.message.img.message-me {
+    justify-content: end !important;
+}
+.message.img.message-friend {
+    justify-content: start !important;
+}
+.file.message{
+    a{
+       border-radius: 16px;
+        display: flex;
+        align-items: center;
+        max-width: 300px !important;
+        line-break: anywhere;
+     padding: 10px;
+    }
+}
+.file.message.message-me{
+    a{
+        background: #2f99f0;
+    }
+}
+.file.message.message-friend{
+    a{
+        background: rgba(70, 114, 154, 0.93);
+    }
 }
 
 .ant-layout-content .message-me{
@@ -76,6 +107,7 @@
         line-break: anywhere;
         width: 100%;
         justify-content: center;
+
 
     }
 }

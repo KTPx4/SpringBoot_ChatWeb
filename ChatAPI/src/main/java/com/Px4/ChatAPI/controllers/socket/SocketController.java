@@ -1,9 +1,11 @@
 package com.Px4.ChatAPI.controllers.socket;
 
+import com.Px4.ChatAPI.controllers.requestParams.chat.FileRequest;
 import com.Px4.ChatAPI.controllers.requestParams.chat.SeenRequest;
 import com.Px4.ChatAPI.controllers.requestParams.relation.FriendItem;
 import com.Px4.ChatAPI.controllers.requestParams.relation.GroupChatItem;
 import com.Px4.ChatAPI.controllers.requestParams.relation.UpdateGroup;
+import com.Px4.ChatAPI.models.message.ConversationRepository;
 import com.Px4.ChatAPI.models.message.MessageModel;
 import com.Px4.ChatAPI.controllers.requestParams.chat.MessageRequest;
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
@@ -21,7 +23,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class SocketController {
@@ -31,14 +36,16 @@ public class SocketController {
     private final ChatService chatService;
     private final RelationService relationService;
     private final GroupService groupService;
+    private final ConversationRepository conversationRepository;
 
     @Autowired
-    public SocketController(SimpMessagingTemplate messagingTemplate, JwtRequestFilter jwtRequestFilter, ChatService chatService, RelationService relationService, GroupService groupService) {
+    public SocketController(SimpMessagingTemplate messagingTemplate, JwtRequestFilter jwtRequestFilter, ChatService chatService, RelationService relationService, GroupService groupService, ConversationRepository conversationRepository) {
         this.messagingTemplate = messagingTemplate;
         this.jwtRequestFilter = jwtRequestFilter;
         this.chatService = chatService;
         this.relationService = relationService;
         this.groupService = groupService;
+        this.conversationRepository = conversationRepository;
     }
 
     @MessageMapping("/connect")
@@ -135,14 +142,34 @@ public class SocketController {
 
             if(gr.getMembers().size() > 0)
             {
-
-
                 gr.getMembers().forEach(id -> { // send notice to each member
                     messagingTemplate.convertAndSendToUser(id, "/update/group", grI);
+
+                    MessageResponse messResponse = new MessageResponse();
+                    messResponse.setType("chat");
+                    messResponse.setSender("server");
+                    messResponse.setTo(gr.getId());
+                    messResponse.setContentType("text");
+                    messResponse.setIsSystem(true);
+
+                    if(grI.getListAdd().size() > 0)
+                    {
+                        messResponse.setId(Date.from(Instant.now()) + "");
+                        grI.getListAdd().forEach(add ->{
+                            messResponse.setContent( "'" + add.getName() + "' has been added");
+                            messagingTemplate.convertAndSendToUser(id, "/topic/messages", messResponse);
+                        });
+                    }
+                    if(grI.getListRemove().size() > 0)
+                    {
+                        messResponse.setId(Date.from(Instant.now()) + "");
+                        grI.getListRemove().forEach(add ->{
+                            messResponse.setContent("'" + add.getName() + "' has been deleted");
+                            messagingTemplate.convertAndSendToUser(id, "/topic/messages", messResponse);
+                        });
+                    }
                 });
             }
-
-
         }
         catch (Exception e)
         {
@@ -162,6 +189,7 @@ public class SocketController {
             }
         }
     }
+
     @MessageMapping("/seen")
     public void setSeen(@Header("simpUser") Principal principal, SeenRequest seenRequest) {
         String groupId = seenRequest.getTo();
@@ -194,6 +222,60 @@ public class SocketController {
                 chatService.setSeen(gr.getId(), userID);
 
                 messResponse.setId(""); // set id of message model
+
+                gr.getMembers().forEach(id -> { // send notice to each member
+                    messagingTemplate.convertAndSendToUser(id, "/topic/messages", messResponse);
+                });
+
+            }
+        }
+        catch (Exception e)
+        {
+//            e.printStackTrace();
+            if(e.getMessage().startsWith("conversation"))
+            {
+                String err = e.getMessage().split("-")[1];
+
+                messResponse.setType("error");
+                messResponse.setSender("server");
+                messResponse.setContent(err);
+                messResponse.setContentType("text");
+
+                messagingTemplate.convertAndSendToUser(userID, "/topic/messages", messResponse);
+            }
+        }
+
+    }
+  @MessageMapping("/sendFile")
+    public void sendFile(@Header("simpUser") Principal principal, FileRequest fileRequest) {
+        String groupId = fileRequest.getTo();
+        String messageId = fileRequest.getMessageId();
+        // Lấy username từ token để gán cho tin nhắn
+        String userID = principal.getName();
+
+
+
+        MessageResponse messResponse = new MessageResponse();
+        messResponse.setTo(groupId);
+
+
+        // loop group and send each members
+        try{
+            GroupModel gr = chatService.canSendMess(userID, groupId);
+            if(gr.getMembers().size() > 0)
+            {
+                // create message model
+                Optional<MessageModel> message = chatService.getMessageById(messageId);
+                if(message.isEmpty()) throw  new Exception("conversation-Message id has not found");
+
+                messResponse.setType("chat");
+                messResponse.setId(message.get().getId());
+                messResponse.setSender(message.get().getSender());
+                messResponse.setSenderName(message.get().getSenderName());
+                messResponse.setAvatar(message.get().getAvatar());
+                messResponse.setContent(message.get().getContent());
+                messResponse.setContentType(message.get().getContentType());
+                messResponse.setCreatedAt(message.get().getCreatedAt());
 
                 gr.getMembers().forEach(id -> { // send notice to each member
                     messagingTemplate.convertAndSendToUser(id, "/topic/messages", messResponse);

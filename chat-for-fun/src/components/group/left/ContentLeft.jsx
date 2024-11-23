@@ -116,7 +116,7 @@ const ContentLeft = ({dataSet, dataFriend, clickGroup, messageApi, createAction}
                         <div style={{margin: "0 10px", overflowY: "auto", maxHeight: 400}}>
                             {dataFriend.map((item, index) => {
                                 return(
-                                    <>
+                                    <div key={item.id}>
                                         <Tooltip id={item.id} title={item.name} >
                                             <Card style={{width: "200px", marginTop: "10px", background: cardColor, border: `1px solid ${borderColor}`}}>
                                                 <Card.Meta
@@ -133,7 +133,7 @@ const ContentLeft = ({dataSet, dataFriend, clickGroup, messageApi, createAction}
                                                 </div>
                                             </Card>
                                         </Tooltip>
-                                    </>
+                                    </div>
                                 )
                             })}
                         </div>
@@ -143,11 +143,11 @@ const ContentLeft = ({dataSet, dataFriend, clickGroup, messageApi, createAction}
                                 onChange={(e)=> {setNameNewGr(e.target.value)}}
                                 className="mt-2 "
                                style={{width: "100%"}} placeholder={"Name group"}/>
-                        <b className={" d-flex justify-content-center"}>Count: {addData.length}</b>
+                        <b className={" d-flex justify-content-center"} style={{color: textColor}}>Count: {addData.length}</b>
                         <div style={{margin: "0 10px", overflowX: "hidden",overflowY: "auto", maxHeight: 400}}>
                             {addData.map((item, index) => {
                                 return (
-                                    <>
+                                    <div key={item.id}>
                                         <Tooltip id={item.id + "add"} title={item.name}>
                                             <Card style={{width: "200px", marginTop: "10px"}}>
                                                 <Card.Meta
@@ -163,7 +163,7 @@ const ContentLeft = ({dataSet, dataFriend, clickGroup, messageApi, createAction}
                                                 </div>
                                             </Card>
                                         </Tooltip>
-                                    </>
+                                    </div>
                                 )
                             })}
                         </div>

@@ -1,5 +1,7 @@
 package com.Px4.ChatAPI.controllers.requestParams.relation;
 
+import com.Px4.ChatAPI.controllers.requestParams.account.AccountInfo;
+import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.message.MessageModel;
 import com.Px4.ChatAPI.models.relation.GroupModel;
 import com.Px4.ChatAPI.models.relation.GroupSettingModel;
@@ -10,53 +12,45 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Getter
+@Setter
 public class GroupChatItem {
-    @Getter
-    @Setter
+
     private String id;
 
-    @Getter
-    @Setter
     private String avatar;
-    @Getter
-    @Setter
+
     private String name;
-    @Getter
-    @Setter
+
     private boolean isPvP= false;
-    @Getter
-    @Setter
+
     private int count = 0;
-    @Getter
-    @Setter
+
     private boolean selected = false;
-    @Getter
-    @Setter
+
     private List<String> members = new ArrayList<>();
 
-    @Getter
-    @Setter
+    private List<AccountInfo> membersV2 = new ArrayList<>();
+
+
     private List<MessageModel> messages = new ArrayList<>();
 
-    @Getter
-    @Setter
+
     private String leaderId;
 
-    @Getter
-    @Setter
     private List<String>  deputy;
 
-    @Getter
-    @Setter
+
     private Date createdAt;
 
-    @Getter
-    @Setter
     private boolean isAllPermit;
 
-    @Getter
-    @Setter
     private List<String> canSend;
+
+    private List<AccountInfo> listAdd = new ArrayList<>();
+    private List<AccountInfo> listRemove = new ArrayList<>();
+    private List<AccountInfo> listAddDeputy = new ArrayList<>();
+    private List<AccountInfo> listRemoveDeputy = new ArrayList<>();
 
     public GroupChatItem() {
     }
@@ -90,5 +84,20 @@ public class GroupChatItem {
         this.isAllPermit = settings.isAllPermit();
         this.createdAt = settings.getCreatedAt();
     }
-
+    public void setValue(GroupModel gr, GroupSettingModel settings)
+    {
+        this.id = gr.getId();
+        this.avatar = gr.getAvatar();
+        this.name = gr.getName();
+        this.members = gr.getMembers();
+        setSettings(settings);
+    }
+    public void addMemberV2(AccountInfo member)
+    {
+        this.membersV2.add(member);
+    }
+    public void addMemberV2(AccountModel accountModel)
+    {
+        this.membersV2.add(new AccountInfo(accountModel.getId(), accountModel.getName(), accountModel.getImage()));
+    }
 }

@@ -41,7 +41,7 @@ const items = [
     getItem('Chats', 'chats', <CommentOutlined />),
     getItem('Groups', 'groups', <TeamOutlined />),
     getItem('Friends', 'friends', <ApartmentOutlined />),
-    getItem('AI', 'ai', <OpenAIOutlined />)
+    // getItem('AI', 'ai', <OpenAIOutlined />)
     // getItem('Files', '9', <FileOutlined />),
 ];
 const items2 = [
@@ -62,6 +62,7 @@ const HomePage = ({openNotification})  =>{
     const [collapsed, setCollapsed] = useState(localStorage.getItem('collapsed-main') ?? false);
     const { currentTheme, changeTheme } = useContext(ThemeContext);
     const key = currentTheme.getKey();
+    const textColor = currentTheme.getText()
     const [selectedTheme, setSelectedTheme] = useState(currentTheme.getKey); // Quản lý các key được chọn
     const [selectedMenu, setSelectedMenu] = useState("chats"); // Quản lý các key được chọn
     // const [bodyComponent,setBodyComponent] = useState(<ChatComponent />);
@@ -88,7 +89,13 @@ const HomePage = ({openNotification})  =>{
 
         socketHandler.connect();
         setWebSocketHandler(socketHandler);
-        // return () => { socketHandler.disconnect(); };
+
+        // Cleanup khi component unmount
+        return () => {
+            if (socketHandler) {
+                socketHandler.disconnect();
+            }
+        };
     }, []);
 // Sử dụng useMemo để khởi tạo các component chỉ một lần
 
@@ -207,13 +214,13 @@ const HomePage = ({openNotification})  =>{
             </Helmet>
             <Modal
                 className={`modal-${key === "theme_dark" ? "dark":"light"}`}
-                title="Log Out"
+                title={<span style={{color: textColor}}>Log Out</span>}
                 open={open}
                 onOk={handleOk}
                 confirmLoading={confirmLoading}
                 onCancel={handleCancel}
             >
-                <p>Do you want to logout?</p>
+                <p style={{color: textColor}}>Do you want to logout?</p>
             </Modal>
             <Layout className="layout-main"  style={{ minHeight: '100vh', background: contentColor, overflowX: "auto" }}>
                 <Sider className="main-sider" style={{ padding: "30px 0", border: "none !important"}}

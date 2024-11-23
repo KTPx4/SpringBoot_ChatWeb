@@ -11,6 +11,7 @@ import com.Px4.ChatAPI.services.AccountService;
 import com.Px4.ChatAPI.services.gmail.SendMailService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +26,8 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping("/api/v1/account")
 public class AccountController {
+    @Value("${spring.application.client}")
+    private String Client;
 
     @Autowired
     AccountService accounService;
@@ -43,6 +46,7 @@ public class AccountController {
 
     @Autowired
     private HttpServletResponse response;
+
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
 
@@ -97,6 +101,10 @@ public class AccountController {
                 mess = e.getMessage().split("-")[1]; // get exception message
                 status = HttpStatus.BAD_REQUEST;
             }
+            else{
+                e.printStackTrace();
+                return new ResponseEntity<>(new Px4Response(fail , null), status);
+            }
         }
         return new ResponseEntity<>(new Px4Response(mess , username), status);
 
@@ -110,6 +118,7 @@ public class AccountController {
         try{
             if(token == null || token.isEmpty()) throw new Exception("reset-Invalid Token");
             accounService.getReset(token);
+//            response.sendRedirect( Client + "/login?reset=true");
         }
         catch (Exception e)
         {

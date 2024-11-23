@@ -379,6 +379,7 @@ const Profile = ({openNotification, changeAvt})  =>{
                 {typeModal === "pass" && (
                     <div id="content-pass">
                         <Input
+                            type="password"
                             defaultValue={null}
                             onChange={(e) => {
                                 setOldPass(e.target.value)
@@ -386,6 +387,7 @@ const Profile = ({openNotification, changeAvt})  =>{
                             }}  style={{margin: 5, background: "#dadada", border: "none"}}  placeholder="Old Password" />
 
                         <Input
+                            type="password"
                             defaultValue={null}
                             onChange={(e) => {
                                 setNewPass(e.target.value)
@@ -393,6 +395,7 @@ const Profile = ({openNotification, changeAvt})  =>{
                             }} style={{margin: 5, background: "#dadada", border: "none"}} placeholder="New Password" />
 
                         <Input
+                            type="password"
                             defaultValue={null}
                             onChange={(e) => {
                                 setConfirm(e.target.value)

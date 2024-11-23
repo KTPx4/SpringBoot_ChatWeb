@@ -29,7 +29,7 @@ public class MessageResponse {
     private String replyMessageId;
 
     private Date createdAt;
-
+    private  Boolean isSystem = false;
 
     private List<String> whoSeen = new ArrayList<>();
 

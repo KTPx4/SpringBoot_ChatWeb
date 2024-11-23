@@ -6,9 +6,12 @@ import ContentCenter from "./center/ContentCenter";
 import {ThemeContext} from "../../ThemeContext";
 import axios, {get} from "axios";
 import useStore from "../../store/useStore";
-import {Input, message, Modal, Upload} from "antd";
-import { InboxOutlined } from '@ant-design/icons';
+import {Avatar, Button, Input, message, Modal, Popconfirm, Upload} from "antd";
+
+
+import {InboxOutlined, UserAddOutlined, MinusOutlined, InfoCircleOutlined, MinusCircleTwoTone, UserSwitchOutlined} from '@ant-design/icons';
 import data from "bootstrap/js/src/dom/data";
+import Spinner from "react-bootstrap/Spinner";
 const { Dragger } = Upload;
 
 const dataTest = [
@@ -166,11 +169,19 @@ const GroupConponent = ({ socketHandler }) =>{
     const [getSeen, setSeen] = useState(null);
     const [sendSeen, setSendSeen] = useState(false)
     const [dataGroup, setDataGroup] = useState([]);
+    const [loadMessage, setLoadMessage] = useState(null);
     const [currentSelected, setCurrentSelected] = useState(null);
     const [newMessage, setNewMessage] = useState(null)
     const [dataFriend, setDataFriend] = useState([]);
+
     const [isModalName, setIsModalName] = useState(false);
     const [isModalUpload, setIsModalUpload] =useState(false);
+    const [isModalPeople, setIsModalPeople] = useState(false);
+    const [isModalLeave, setIsModalLeave] = useState(false);
+    const [isModalAdd, setIsModalAdd] = useState(false);
+    const [isModalFile, setIsModalFile] = useState(false)
+
+    const [btnLoading, setBtnLoading] = useState("")
     const [inputNewName, setInputNewName] = useState("")
     const beforeUpload = (file) => {
         const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
@@ -183,6 +194,7 @@ const GroupConponent = ({ socketHandler }) =>{
         }
         return isJpgOrPng && isLt2M;
     };
+
     const props = {
         name: 'file',
         multiple: false,
@@ -222,6 +234,65 @@ const GroupConponent = ({ socketHandler }) =>{
             console.log('Dropped files', e.dataTransfer.files);
         },
     };
+    const propsFile = {
+        name: 'file',
+        multiple: false,
+        action: `${SERVER}/file?token=${token}&group=${currentSelected?.id ?? "-1"}`,
+        beforeUpload: (file) => {
+            // Các loại file được phép
+            const allowedExtensions = [
+                "jpg", "jpeg", "png",
+                "zip", "rar", "txt",
+                "docx", "xlsx", "ppt", "pptx"
+            ];
+
+            // Lấy phần mở rộng của file
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+
+            // Kiểm tra loại file
+            const isAllowedFileType = allowedExtensions.includes(fileExtension);
+            if (!isAllowedFileType) {
+                message.error(`You can only upload files with extensions: ${allowedExtensions.join(", ")}`);
+                return false;
+            }
+
+            // Kiểm tra kích thước file
+            const isLt30M = file.size / 1024 / 1024 < 30;
+            if (!isLt30M) {
+                message.error('File must be smaller than 30MB!');
+                return false;
+            }
+
+            return isAllowedFileType && isLt30M;
+        },
+        onChange(info) {
+            const { status } = info.file;
+            if (status !== 'uploading') {
+                console.log('Uploading file:', info.file);
+            }
+            if (status === 'done') {
+                message.success(`${info.file.name} file uploaded successfully.`);
+                var messId = info.file.response.data.id;
+                socketHandler.sendFile(currentSelected?.id, messId)
+                // const newLink = info.file.response + `?t=${Date.now()}`;
+                // const curr = { ...currentSelected, avatar: newLink };
+                // setCurrentSelected(curr);
+                //
+                // const updatedDataGroup = dataGroup.map((gr) =>
+                //     gr.id === curr.id ? curr : gr
+                // );
+                // setDataGroup(updatedDataGroup);
+            } else if (status === 'error') {
+                message.error(`${info.file.name} file upload failed.`);
+            }
+        },
+        onDrop(e) {
+            console.log('Dropped files', e.dataTransfer.files);
+        },
+    };
+
+
+    const [inputSearchName, setInputSearchName] = useState("")
 
     const sendServer= async (action, method, data)=>{
         try {
@@ -267,7 +338,6 @@ const GroupConponent = ({ socketHandler }) =>{
 
     }, []);
 
-
     useEffect(() => {
         if(newMessage )
         {
@@ -288,43 +358,29 @@ const GroupConponent = ({ socketHandler }) =>{
 
             if( currentSelected && newMessage.to === currentSelected?.id)
             {
-                // handleSendSeen(currentSelected.id)
+                handleSendSeen(currentSelected.id)
             }
         }
 
 
 
-    }, [newMessage ]);
+    }, [newMessage]);
+    useEffect(() => {
+        if(dataGroup && currentSelected)
+        {
+            var newCurr = dataGroup.filter((gr) => (gr.id === currentSelected.id)).at(0)
+            if(!newCurr) return
+            console.log(newCurr)
+            setCurrentSelected(newCurr)
+        }
+    }, [dataGroup]);
     useEffect(() => {
         if(sendSeen === true && currentSelected)
         {
             setSendSeen(false)
-            handleSendSeen()
+            handleSendSeen(currentSelected.id)
         }
     }, [sendSeen]);
-
-    useEffect(() => {
-        if(getSeen)
-        {
-            var to = getSeen.to
-            var sender = getSeen.sender
-            if (currentSelected && currentSelected.id === to && sender !== myId) {
-                const curr = { ...currentSelected }; // Tạo bản sao để tránh sửa trực tiếp
-                const lastMessage = curr.messages.at(curr.messages.length - 1);
-
-                if (lastMessage && !lastMessage.whoSeen.includes(sender)) {
-                    // Chỉ push nếu `sender` chưa có trong `whoSeen`
-                    lastMessage.whoSeen.push(sender);
-                }
-
-                setCurrentSelected(curr);
-                setDataGroup((prev) =>
-                    prev.id === curr.id ? curr : prev
-                );
-            }
-
-        }
-    }, [getSeen])
 
     useEffect(()=>{
         if(currentSelected)
@@ -346,7 +402,7 @@ const GroupConponent = ({ socketHandler }) =>{
                     deputy: updateGr.deputy,
                     leaderId: updateGr.leaderId,
                     members: updateGr.members,
-
+                    membersV2: updateGr.membersV2
                 }
             ))
 
@@ -441,7 +497,6 @@ const GroupConponent = ({ socketHandler }) =>{
 
     const handleClickGroup = (group) =>{
 
-
         var data = dataGroup.map(item => item.id === group.id ? {...group, count: 0, selected: true} : {...item, selected: false});
 
         setDataGroup(data)
@@ -450,16 +505,15 @@ const GroupConponent = ({ socketHandler }) =>{
 
         setCurrentSelected(newGr)
 
-        // handleSendSeen(group.id)
-        handleSendSeen()
+        handleSendSeen(group.id)
 
     }
 
-    const handleSendSeen = () =>{
-     if(socketHandler && currentSelected)
-     {
-         socketHandler.sendSeen(currentSelected.id)
-     }
+    const handleSendSeen = (id) =>{
+        if(currentSelected)
+         {
+             socketHandler.sendSeen(id)
+         }
     }
 
     const handleCreateGroup = async (createData , callBack) =>{
@@ -510,15 +564,24 @@ const GroupConponent = ({ socketHandler }) =>{
     const handleScroll = async(id, page) =>{
         await loadMess(id, page)
     }
+
+    const openModal = {
+        Name: ()=> setIsModalName(true),
+        Upload: ()=>setIsModalUpload(true),
+        People: ()=> setIsModalPeople(true),
+        Leave: ()=> setIsModalLeave(true),
+        File: () => setIsModalFile(true)
+    }
     const handlePermis = async(id, permis) =>{
         const action = `group/${currentSelected.id}?permis=${permis}`
         const method = "put"
         const data = {}
         const datas = {
-            id: currentSelected.id,
+            id: id,
             permis: `${permis}`
         }
         socketHandler.sendUpdateGroup(datas)
+        /*
         var res = await sendServer(action, method, data)
 
         if(res.status && res.status === 200)
@@ -528,7 +591,61 @@ const GroupConponent = ({ socketHandler }) =>{
             setDataGroup(newDt)
             setCurrentSelected((prev) =>({...prev, allPermit: dt.allPermit }))
         }
+        */
     }
+
+    const handleAdd = async(id, listAdd)=>{
+        if(!id || !listAdd)
+        {
+            message.error("Id group or list Add member is null")
+            return
+        }
+
+        const datas = {
+            id: id,
+            addMembers: listAdd
+        }
+        socketHandler.sendUpdateGroup(datas)
+    }
+
+    const handleRemove = async(id, listRemove) =>{
+        if(!id || !listRemove)
+        {
+            message.error("Id group or list Remove member is null")
+            return
+        }
+        const datas = {
+            id: id,
+            removeMembers: listRemove
+        }
+        socketHandler.sendUpdateGroup(datas)
+        setBtnLoading("")
+    }
+
+    const handleAddDeputy = async(id, listAddDeputy) =>{
+        const datas = {
+            id: id,
+            addDeputy: listAddDeputy
+        }
+        socketHandler.sendUpdateGroup(datas)
+    }
+
+    const handleRemoveDeputy = async(id, listDelDeputy) =>{
+        const datas = {
+            id: id,
+            removeDeputy: listDelDeputy
+        }
+        socketHandler.sendUpdateGroup(datas)
+    }
+
+    const handleSetLeader = async(id, leader) =>{
+        const datas = {
+            id: id,
+            leader: leader
+        }
+        socketHandler.sendUpdateGroup(datas)
+    }
+
 
     const loadMess = async(id, page)=>{
         const url = `${SERVER}/chat/group/${id}?page=${page}`;
@@ -558,11 +675,17 @@ const GroupConponent = ({ socketHandler }) =>{
                             )
                         }
                     );
+                    if(page == 1)
+                    {
+                        var curr = {...currentSelected}
 
-                    var curr = {...currentSelected}
-                    curr.messages = [...data, ...curr.messages]
-                    console.log(curr)
-                    setCurrentSelected(curr)
+                        curr.messages = [...data, ...curr.messages]
+
+                        //setCurrentSelected(curr)
+                    }
+                    else{
+                        setLoadMessage(data)
+                    }
                 }
             }
 
@@ -605,9 +728,28 @@ const GroupConponent = ({ socketHandler }) =>{
 
         }
     }
-    const okModalUpload =()=>{
 
+    const confirmDelMember = (id) => {
+
+        handleRemove(currentSelected.id, [id])
+        setBtnLoading(id)
+        // message.success('Click on Yes');
+    };
+
+    const confirmLeader = (id) => {
+        handleSetLeader(currentSelected.id, id)
     }
+    const confirmDeputy = (id) => {
+        handleAddDeputy(currentSelected.id, [id])
+    }
+    const confirmRemoveDeputy = (id) => {
+        handleRemoveDeputy(currentSelected.id, [id])
+    }
+
+    const cancelDelMember = (e) => {
+        // console.log(e);
+        // message.error('Click on No');
+    };
 
     return(
         <HelmetProvider>
@@ -615,11 +757,11 @@ const GroupConponent = ({ socketHandler }) =>{
                 <link href="/css/group/group.css" rel="stylesheet" />
             </Helmet>
             {contextHolder2}
-
             <Modal
-                    className={`modal-${themeName === "theme_dark" ? "dark" : "light"}`}
+                    className={`modal-${themeName === "theme_dark" ? "dark" : "light"} Modal-Name`}
                     title={<p style={{color: textColor}}>Change name</p>}
-                   open={isModalName} onOk={okModalName} onCancel={()=> setIsModalName(false)}>
+                   open={isModalName} onOk={okModalName} onCancel={()=> setIsModalName(false)}
+            >
                 <Input placeholder={"Name"} value={inputNewName}
                        onKeyDown={(e)=>{
                            if(e.key === "Enter"){
@@ -631,9 +773,10 @@ const GroupConponent = ({ socketHandler }) =>{
                 }}/>
             </Modal>
             <Modal
-                    className={`modal-${themeName === "theme_dark" ? "dark" : "light"}`}
+                    className={`modal-${themeName === "theme_dark" ? "dark" : "light"} Modal-Avatar`}
                     onCancel={()=>setIsModalUpload(false)}
-                   open={isModalUpload} footer={null} >
+                   open={isModalUpload} footer={null}
+            >
                 <Dragger className="p-2" {...props}>
                     <p className="ant-upload-drag-icon">
                         <InboxOutlined />
@@ -644,18 +787,180 @@ const GroupConponent = ({ socketHandler }) =>{
                     </p>
                 </Dragger>
             </Modal>
+            <Modal
+                className={`modal-${themeName === "theme_dark" ? "dark" : "light"} Modal-File`}
+                onCancel={()=>setIsModalFile(false)}
+                open={isModalFile} footer={null}
+            >
+                <Dragger className="p-2" {...propsFile}>
+                    <p className="ant-upload-drag-icon">
+                        <InboxOutlined />
+                    </p>
+                    <p style={{color: textColor}}  className="ant-upload-text">Click or drag file to this area to upload</p>
+                    <p style={{color: hintColor}} className="ant-upload-hint">
+                        Select an image less than 30mb
+                    </p>
+                </Dragger>
+            </Modal>
+            <Modal
+                style={{zIndex:999 }}
+                className={`modal-${themeName === "theme_dark" ? "dark" : "light"} Modal-Members-Add`}
+                open={isModalAdd}
+                footer={false}
+                onCancel={()=>setIsModalAdd(false)}
+            >
+                <div style={{display: "flex", flexDirection: "column", margin: 15}}>
+                    <Input placeholder="Search name..."
+                       onChange={(e) => {
+                            setInputSearchName(e.target.value)
+
+                        }}
+                    />
+                    <div className="my-2" style={{height: 450, overflowY: "auto"}}>
+                        {dataFriend.map((friend, index)=>{
+
+                            var isMember = currentSelected?.members?.includes(friend.id);
+
+                            return (
+                                <div
+                                    className="mx-2"
+                                    key={friend.id +"modal-add"}
+                                     style={{
+                                         display: friend.name.toLowerCase().includes(inputSearchName.toLowerCase())? "flex" : "none", flexDirection: "row", justifyContent: "space-between", marginTop: 5
+                                    }}>
+                                    <div key={friend.id} style={{display: "flex", flexDirection: "row"}}>
+                                        <Avatar style={{width: 50, height: 50}} src={friend.avatar ?? ""}/>
+                                        <div style={{display: "flex", flexDirection: "column"}}>
+                                            <span style={{
+                                                marginLeft: 8,
+                                                fontSize: 19,
+                                                color: textColor
+                                            }}>{friend.name}</span>
+                                            <i style={{marginLeft: 8, fontSize: 13, color: hintColor}}>{friend.id}</i>
+                                        </div>
+                                    </div>
+                                    {isMember === true && <span style={{alignSelf: "center", color: "aqua"}}>Members</span>}
+                                    {isMember === false && (<Button onClick={()=>{handleAdd(currentSelected?.id, [friend.id])}} icon={"+"} title={"add"} style={{alignSelf: "center"}}/>)}
+                                </div>
+
+                            )
+                        })}
+                    </div>
+                </div>
+            </Modal>
+            <Modal
+                style={{zIndex: 888}}
+                className={`modal-${themeName === "theme_dark" ? "dark" : "light"} Modal-Members`}
+                open={isModalPeople}
+                footer={false}
+                onCancel={() => setIsModalPeople(false)}>
+                <div style={{height: 500, display: "flex", flexDirection: "column"}}>
+                    <div style={{
+                        paddingBottom: 8,
+                        display: "flex",
+                        flexDirection: "row",
+                        borderBottom: `1px solid ${borderColor}`
+                    }}>
+                        {currentSelected?.allPermit === true && (
+                            <Button onClick={() => setIsModalAdd(true)} icon={<UserAddOutlined/>} title={"Add"}/>
+                        )}
+                        <h4 style={{marginLeft: 10, color: textColor}}>Members: {currentSelected?.members?.length ?? "0"}</h4>
+                    </div>
+                    <div style={{padding: 20, overflowY: "auto"}}>
+                        {currentSelected?.membersV2.map((member, index) =>{
+                            var myRole = currentSelected?.leaderId === myId
+                                ? "Leader" :
+                                (currentSelected?.deputy?.includes(myId) ? "Deputy" : "Member")
+
+                            var memberRole = currentSelected?.leaderId === member.id
+                                ?
+                                "Leader" :
+                                (currentSelected?.deputy?.includes(member.id) ? "Deputy" : "Member")
+                            var isDeputy = currentSelected?.deputy?.includes(member.id);
+                            return (
+                                <div key={member.id + index} style={{ margin: "16px 0", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between"}}>
+                                    <div style={{display: "flex", flexDirection: "row"}}>
+                                        <Avatar style={{width: 50, height: 50}} src={member.avatar??""}/>
+                                        <div style={{display: "flex", flexDirection: "column"}}>
+                                            <span style={{marginLeft: 8, fontSize: 19, color: textColor}}>{member.name}</span>
+                                            <i style={{marginLeft: 8, fontSize: 13, color: hintColor}}>{memberRole}</i>
+                                        </div>
+                                    </div>
+
+                                    {member.id === myId && (<b style={{color: textColor}}>You</b>)}
+                                    {member.id !== myId && (
+                                        <div>
+                                            {/*{btnLoading === member.id && (*/}
+                                            {/*    <Spinner style={{height: 20, width: 20}} className="mx-2" variant={"info"}/>*/}
+                                            {/*)}*/}
+                                            {/*{btnLoading !== member.id && (*/}
+                                            {/*    */}
+                                            {/*)}*/}
+                                            {myRole === "Leader" && (
+                                                <Popconfirm
+                                                    title="Accept role"
+                                                    // description="Are you sure to delete this member?"
+                                                    onConfirm={() => confirmLeader(member.id)}
+                                                    onCancel={()=>{
+                                                        if(isDeputy) {
+                                                            confirmRemoveDeputy(member.id)
+                                                        }
+                                                        else {
+                                                            confirmDeputy(member.id)
+                                                        }
+                                                    }}
+                                                    okText="Leader"
+                                                    cancelText= {isDeputy ? "Remove Deputy" : "Deputy"}
+                                                >
+                                                    <Button  title={"Remove"}
+                                                             icon={<UserSwitchOutlined />}/>
+                                                </Popconfirm>
+                                            )}
+                                            <Popconfirm
+                                                title="Delete member"
+                                                description="Are you sure to delete this member?"
+                                                onConfirm={() => confirmDelMember(member.id)}
+                                                onCancel={cancelDelMember}
+                                                okText="Yes"
+                                                cancelText="No"
+                                            >
+                                                {memberRole !== "Leader" && (myRole === "Leader" || myRole === "Deputy") &&   (
+                                                    <Button className="mx-2" title={"Remove"}
+                                                            icon={<MinusCircleTwoTone twoToneColor={"red"}/>}/>
+                                                )}
+                                            </Popconfirm>
+                                            <Button title={"Info"} icon={<InfoCircleOutlined
+                                                onClick={() => window.location.replace(`/account/${member?.id}`)}/>}/>
+                                        </div>
+                                    )}
+
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            </Modal>
 
             <div className="container-fluid"
-                 style={{display:"flex", flexDirection:"row",minHeight:720, minWidth: 750, overflow: "auto", padding: "5px 0"}}>
+                 style={{
+                     display: "flex",
+                     flexDirection: "row",
+                     minHeight: 720,
+                     minWidth: 750,
+                     overflow: "auto",
+                     padding: "5px 0"
+                 }}>
 
-                <div style={{ width: "26%", height: "100%", background: "transparent"}}>
+                <div style={{width: "26%", height: "100%", background: "transparent"}}>
                     {/*content left*/}
-                    <ContentLeft  createAction={handleCreateGroup} messageApi={messageApi} dataFriend={dataFriend} dataSet={dataGroup} clickGroup={handleClickGroup} />
+                    <ContentLeft createAction={handleCreateGroup} messageApi={messageApi} dataFriend={dataFriend}
+                                 dataSet={dataGroup} clickGroup={handleClickGroup}/>
                 </div>
 
-                <div style={{ width: "74%", height: "100%", background: "transparent",
+                <div style={{
+                    width: "74%", height: "100%", background: "transparent",
                     borderLeft: `1px solid ${borderColor}`,
-                    borderTop:  `1px solid ${borderColor}`,
+                    borderTop: `1px solid ${borderColor}`,
                     borderBottom: `1px solid ${borderColor}`,
                     borderStartStartRadius: 25,
                     borderEndStartRadius: 25,
@@ -664,25 +969,25 @@ const GroupConponent = ({ socketHandler }) =>{
                 }}>
                     {/*content center*/}
                     <ContentCenter
-                                    openModal={{Name: ()=> setIsModalName(true), Upload: ()=>setIsModalUpload((true))}}
+                                    openModal={openModal}
                                     Scroll={handleScroll}
                                     messageApi={messageApi}
                                     currentSelected={currentSelected}
                                     sendMess={sendMessage}
+                                    loadMess={loadMessage}
                                     newMessage={newMessage}
+                                    handleRemove={handleRemove}
                                     sendPermis={handlePermis}/>
                 </div>
-
-                {/*<div style={{ visibility: "hidden" ,width: "20%", height: "100%", padding: 25, background: "transparent",*/}
-                {/*            borderEndEndRadius: 25 ,*/}
-                {/*            borderStartEndRadius: 25,*/}
-                {/*            borderTop:  `1px solid ${borderColor}`,*/}
-                {/*            borderBottom:  `1px solid ${borderColor}`,*/}
-                {/*            borderRight:`1px solid ${borderColor}`}}>*/}
-                {/*    /!*content right*!/*/}
-                {/*    <ContentRight />*/}
-                {/*</div>*/}
-
+                {/*<div style={{ visibility: "hidden" ,width: "20%", height: "100%", padding: 25, background: "transparent",
+                            borderEndEndRadius: 25 ,
+                            borderStartEndRadius: 25,
+                            borderTop:  `1px solid ${borderColor}`,
+                            borderBottom:  `1px solid ${borderColor}`,
+                            borderRight:`1px solid ${borderColor}`}}>
+                    content right
+                    <ContentRight />
+                </div>*/}
             </div>
         </HelmetProvider>
     )

@@ -13,6 +13,11 @@ class WebSocketHandler {
         this.onAddFriend = null;
         this.onSearch = null;
         this.onUpdateGroup = null;
+
+        this.retryDelay = 3000; // 3 giây trước khi thử lại
+        this.retryAttempts = 0;
+        this.maxRetries = 1000; // Số lần thử lại tối đa
+        this.isConnected = false; // Trạng thái kết nối
     }
     // Thiết lập callback cho tin nhắn mới
     setOnMessageReceived(callback) {
@@ -92,13 +97,31 @@ class WebSocketHandler {
             },
             (error) => {
                 console.error('Connection error:', error);
+                this.isConnected = false;
+                this.retryConnection(); // Thử kết nối lại khi có lỗi
             }
         );
 
-        ws.onclose = (event) => {
-            alert("Server has been closed connect. Please try again!")
-            console.log(event.wasClean ? 'Connection closed cleanly' : 'Connection error:', event.reason || 'Unknown reason');
+        ws.onclose = () => {
+            console.log('Connection closed.');
+            this.isConnected = false;
+            this.retryConnection(); // Thử kết nối lại khi bị ngắt
         };
+    }
+
+    // Tự động thử lại kết nối
+    retryConnection() {
+        if (this.isConnected || this.retryAttempts >= this.maxRetries) {
+            console.warn("Exceeded max retry attempts or already connected.");
+            return;
+        }
+
+        this.retryAttempts++;
+        console.log(`Retrying connection (${this.retryAttempts}/${this.maxRetries})...`);
+
+        setTimeout(() => {
+            this.connect(); // Thử kết nối lại
+        }, this.retryDelay);
     }
 
     sendUpdateGroup(updateGroup)
@@ -106,6 +129,8 @@ class WebSocketHandler {
         if (this.stompClient && this.stompClient.connected) {
             this.stompClient.send('/app/update.group', {}, JSON.stringify(updateGroup));
         }else {
+            this.isConnected = false;
+            this.retryConnection(); // Thử kết nối lại khi bị ngắt
             console.log("Not connected to WebSocket or message is empty.");
         }
     }
@@ -123,8 +148,11 @@ class WebSocketHandler {
             this.stompClient.send('/app/chat', {}, JSON.stringify(message));
         } else {
             console.log("Not connected to WebSocket or message is empty.");
+            this.isConnected = false;
+            this.retryConnection(); // Thử kết nối lại khi bị ngắt
         }
     }
+
     sendAction(to)
     {
         if (this.stompClient && this.stompClient.connected) {
@@ -135,9 +163,12 @@ class WebSocketHandler {
             };
             this.stompClient.send('/app/friend', {}, JSON.stringify(message));
         } else {
+            this.isConnected = false;
+            this.retryConnection(); // Thử kết nối lại khi bị ngắt
             console.log("Not connected to WebSocket or message is empty.");
         }
     }
+
     sendSeen(to)
     {
         if (this.stompClient && this.stompClient.connected) {
@@ -148,6 +179,24 @@ class WebSocketHandler {
             };
             this.stompClient.send('/app/seen', {}, JSON.stringify(message));
         } else {
+            this.isConnected = false;
+            this.retryConnection(); // Thử kết nối lại khi bị ngắt
+            console.log("Not connected to WebSocket or message is empty.");
+        }
+    }
+
+    sendFile(to, messageId)
+    {
+        if (this.stompClient && this.stompClient.connected) {
+            const message = {
+                to: to,
+                messageId: messageId
+
+            };
+            this.stompClient.send('/app/sendFile', {}, JSON.stringify(message));
+        } else {
+            this.isConnected = false;
+            this.retryConnection(); // Thử kết nối lại khi bị ngắt
             console.log("Not connected to WebSocket or message is empty.");
         }
     }
@@ -160,9 +209,13 @@ class WebSocketHandler {
             };
             this.stompClient.send('/app/friend.search', {}, JSON.stringify(message));
         } else {
+            this.isConnected = false;
+            this.retryConnection(); // Thử kết nối lại khi bị ngắt
             console.log("Not connected to WebSocket or message is empty.");
         }
     }
+
+
     // Hàm lấy danh sách tin nhắn nhận được
     getReceivedMessages() {
         return this.receivedMessages;

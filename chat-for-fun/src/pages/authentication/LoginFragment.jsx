@@ -7,7 +7,7 @@ import Spinner from "react-bootstrap/Spinner";
 
 const SERVER = process.env.REACT_APP_SERVER || 'http://localhost:8080/api/v1';
 
-const LoginFragment = ({user, pass, openNotification}) => {
+const LoginFragment = ({user, pass, openNotification, openForgot}) => {
     const [username, setUsername] = useState(user || '');
     const [password, setPassword] = useState(pass || '');
     const [isLoading, setIsLoading] = useState(false);
@@ -82,13 +82,22 @@ const LoginFragment = ({user, pass, openNotification}) => {
                            placeholder="Username" className="input input-user input-login"/>
                     <input value={password}
                            onChange={e => setPassword(e.target.value)}
-                        placeholder="Password" className="input input-pass input-login" type="password"/>
+                           placeholder="Password" className="input input-pass input-login" type="password"/>
                     {isLoading ?
                         <Spinner animation="border" variant="danger" style={{margin: "0 auto"}}/>
                         :
                         <button style={{background: "#f9629f"}} type="submit" className="login-button">LOG IN</button>
                     }
                 </form>
+                <button onClick={openForgot} style={{
+                    border: "none",
+                    background: "transparent",
+                    color: "black",
+                    fontSize: 14,
+                    marginTop: 15
+                }}>Forgot password
+                </button>
+
             </div>
 
             {/* Container cho các lớp sóng */}

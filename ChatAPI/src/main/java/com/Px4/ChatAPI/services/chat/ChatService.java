@@ -1,6 +1,7 @@
 package com.Px4.ChatAPI.services.chat;
 
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
+import com.Px4.ChatAPI.controllers.requestParams.account.AccountInfo;
 import com.Px4.ChatAPI.controllers.requestParams.relation.GroupChatItem;
 import com.Px4.ChatAPI.controllers.requestParams.relation.FriendItem;
 import com.Px4.ChatAPI.controllers.requestParams.relation.ResponseFriends;
@@ -61,6 +62,7 @@ public class ChatService {
     {
 
        try{
+
            Optional<GroupModel> grModel = groupRepository.findById(toGroupId);
             GroupModel gr = null;
            if(grModel.isEmpty())
@@ -71,6 +73,8 @@ public class ChatService {
                 gr = relationService.initGroup(userID, toGroupId);
 
            }else gr = grModel.get();
+
+           if(!gr.getMembers().contains(userID))  throw new Exception("conversation-User not allowed to send message");
 
            if(gr.isPvP()) // chat 2 pvp
            {
@@ -116,6 +120,7 @@ public class ChatService {
         messageModel = messageRepository.save(messageModel);
         return messageModel;
     }
+
     public boolean setSeen(String groupId, String userID) throws Exception
     {
         //System.out.println(groupId);
@@ -179,6 +184,10 @@ public class ChatService {
         return modifiableList;
     }
 
+    public Optional<MessageModel> getMessageById(String id)
+    {
+        return messageRepository.findById(id);
+    }
     public ResponseFriends getAllChat(boolean isPvP)
     {
 
@@ -334,6 +343,11 @@ public class ChatService {
         listGr.forEach(gr->{
             GroupChatItem groupChatItem = new GroupChatItem(gr);
 
+            gr.getMembers().forEach(memberId ->{
+                AccountModel acc = accountRepository.findById(memberId).orElse(null);
+                if(acc != null) groupChatItem.addMemberV2(acc);
+            });
+            
             Query queryConv = new Query();
             queryConv.addCriteria(Criteria.where("groupId").is(gr.getId()));
             ConversationModel Conv = mongoTemplate.findOne(queryConv, ConversationModel.class);
@@ -352,7 +366,7 @@ public class ChatService {
 
                     Px4Generate.sortMessagesByDate(modifiableList);
                     int countSent = (int) modifiableList.stream()
-                            .filter(m -> !m.getSender().equals(userId) && !m.getWhoSeen().contains(userId))  // Lọc các phần tử có sender khác userId
+                            .filter(m -> !m.getSender().equals(userId) && !m.getWhoSeen().contains(userId) && !m.isSystem())  // Lọc các phần tử có sender khác userId
                             .count();
 
                     groupChatItem.setMessages(modifiableList);
