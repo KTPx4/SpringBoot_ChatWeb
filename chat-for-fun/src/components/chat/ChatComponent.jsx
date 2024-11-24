@@ -146,6 +146,7 @@ const ChatComponent = ({socketHandler}) =>{
                 //     gr.id === curr.id ? curr : gr
                 // );
                 // setDataGroup(updatedDataGroup);
+                setIsModalFile(false)
             } else if (status === 'error') {
                 message.error(`${info.file.name} file upload failed.`);
             }
@@ -531,13 +532,26 @@ const ChatComponent = ({socketHandler}) =>{
                                         return (
 
                                             <div
-
+                                                style={{
+                                                    display: "flex",
+                                                    flexDirection: "row",
+                                                    alignItems: "center"
+                                                }}
                                                 key={item.id + Date.now()}
                                                 className={ `message 
                                                     ${item.sender === myId ?"message-me" : "message message-friend"} 
                                                     ${(page > 1 &&  index % (15) === 0 ) ? "message-border" : ""}
                                                 `}
                                             >
+                                                {!isSystem && (
+                                                    <Tooltip title={item.senderName}>
+                                                        <Avatar style={{
+                                                            width: 25,
+                                                            height: 25,
+                                                            visibility: item.sender === myId ? "hidden" : "visible"
+                                                        }} src={item.avatar}/>
+                                                    </Tooltip>
+                                                )}
                                                 <Tooltip  title={convertToHCMTime(item.createdAt??"")}>
                                                     <p>{item.content}</p>
                                                 </Tooltip>
@@ -558,7 +572,7 @@ const ChatComponent = ({socketHandler}) =>{
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
-                                                    margin: "5px 0 "
+                                                    margin: "10px 0 "
                                                 }}
 
                                                 className={item.sender === myId ? "message img message-me" : "message img message-friend"}
@@ -606,7 +620,7 @@ const ChatComponent = ({socketHandler}) =>{
                                             <div
                                                 key={item.id}
                                                 className={`file message ${item.sender === myId ? "message-me" : "message-friend"}`}
-                                                style={{marginTop: 10 ,display: "flex", flexDirection: "row",  alignItems: "flex-end"}}
+                                                style={{margin: "10px 0" ,display: "flex", flexDirection: "row",  alignItems: "flex-end"}}
                                             >
                                                 {!isSystem && (
                                                     <Tooltip title={item.senderName}>
@@ -623,7 +637,7 @@ const ChatComponent = ({socketHandler}) =>{
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         style={{
-                                                            color: textColor,
+                                                            color: "white",
                                                             textDecoration: "underline",
                                                             wordBreak: "break-word",
                                                         }}

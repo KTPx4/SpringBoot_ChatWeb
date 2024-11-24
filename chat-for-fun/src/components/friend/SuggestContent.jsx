@@ -148,6 +148,10 @@ const SuggestContent = ({ openModal, messageApi, sendAction, updateUser, searchN
             })
             setButtonLoading("")
             setDataSuggests(data)
+            var dt= dataSearch.map(item=>{
+                return item?.id === updateUser?.id ? updateUser : item
+            })
+            setDataSearch(dt)
         }
     }, [updateUser]);
 
@@ -209,7 +213,7 @@ const SuggestContent = ({ openModal, messageApi, sendAction, updateUser, searchN
                      marginLeft: 7,
                      marginTop: 5,
                      background: `${contentColor}`,
-                     overflow: "auto",
+                     // overflow: "auto",
                      alignItems: "center",
                      padding: "30px",
                      border: `1px solid ${borderColor}`,

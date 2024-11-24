@@ -69,8 +69,10 @@
     width: fit-content !important;
 }
 
-.img span{
-    max-width: 300px;
+
+img{
+    max-width: 250px;
+    max-height: 300px;
 }
 .message.img.message-me {
     justify-content: end !important;

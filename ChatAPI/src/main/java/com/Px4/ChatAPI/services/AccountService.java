@@ -32,6 +32,8 @@ public class AccountService {
     private final JwtRequestFilter jwtRequestFilter;
     @Value( "${spring.application.host}")
     private String HOST;
+ @Value( "${spring.application.client_reset_acc}")
+    private String CLIENT;
 
     @Value( "${spring.application.port}")
     private String PORT;
@@ -230,7 +232,7 @@ public class AccountService {
 
         resetRepository.save(resetAcc);
 
-        String href = String.format("%s://%s:%s/%s/account/reset?token=%s", PROTOCOL, HOST, PORT, VERSION, token);
+        String href = String.format("%s?token=%s", CLIENT, token);
 //        System.out.println("RUN OK:"+ href);
 
         sendMailService.submitContactRequest( email,"Khôi phục mật khẩu",

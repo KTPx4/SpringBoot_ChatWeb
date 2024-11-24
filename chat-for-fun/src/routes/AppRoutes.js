@@ -10,6 +10,7 @@ import {
     notification, message,
 } from "antd";
 import TestPage from "../pages/TestPage";
+import ResetPage from "../pages/authentication/ResetPage";
 const AppRoutes = () =>{
     const [api, contextHolder] = notification.useNotification();
     const [messageApi, contextHolder2] = message.useMessage();
@@ -54,7 +55,9 @@ const AppRoutes = () =>{
                 <Route path="/login" element={<LayoutPage/>} >
                     <Route index element={<AuthPage openNotification={openNotification} />} />
                 </Route>
-
+                <Route path="/reset">
+                    <Route index element={<ResetPage />} />
+                </Route>
                 <Route path="*" element={<NotFoundPage/>}/>
 
             </Routes>

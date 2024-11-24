@@ -204,13 +204,13 @@ const FriendComponent = ({userId, socketHandler}) =>{
             {contextHolder2}
 
             <Modal
-                title="Nhắn tin"
+                title="Fast message"
                 open={isModalVisible}
                 onOk={handleOk}
                 onCancel={handleCancel}
                 footer={[
                     <Button key="back" onClick={handleCancel}>
-                        Đóng
+                        Close
                     </Button>,
                     <Button
                         key="submit"
@@ -218,13 +218,13 @@ const FriendComponent = ({userId, socketHandler}) =>{
                         icon={<SendOutlined />}
                         onClick={handleOk}
                     >
-                        Gửi
+                        Send
                     </Button>,
                 ]}
             >
                 <Input
                     ref={focusChatRef}
-                    placeholder="Nhập tin nhắn..."
+                    placeholder="Message..."
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onPressEnter={handleOk}

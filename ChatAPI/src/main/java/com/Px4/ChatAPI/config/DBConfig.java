@@ -34,9 +34,9 @@ public class DBConfig {
 
     @Bean
     public MongoTemplate mongoTemplate() {
-//        String connectionString = String.format("mongodb://%s:%s", dbHost, dbPort); // connect to local db
+        String connectionString = String.format("mongodb://%s:%s", dbHost, dbPort); // connect to local db
 
-        String connectionString = String.format("mongodb+srv://%s:%s@dbfinal.th4yvbk.mongodb.net/?retryWrites=true&w=majority&appName=DbFinal", dbUser, dbPass); // connect to cloud db
+//        String connectionString = String.format("mongodb+srv://%s:%s@dbfinal.th4yvbk.mongodb.net/?retryWrites=true&w=majority&appName=DbFinal", dbUser, dbPass); // connect to cloud db
 
 
         MongoTemplate mongoTemplate =new MongoTemplate(MongoClients.create(connectionString), dbName);

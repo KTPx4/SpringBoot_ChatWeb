@@ -409,7 +409,7 @@ const ContentCenter = ({
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        margin: "5px 0 "
+                                                        margin: "10px 0 "
                                                     }}
 
                                                     className={item.sender === myId ? "message img message-me" : "message img message-friend"}
