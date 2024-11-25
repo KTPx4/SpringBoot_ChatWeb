@@ -372,7 +372,7 @@ const ContentCenter = ({
                         {currentSelected && (
                             <>
                                 {dataMess.map((item, index)=>{
-                                    console.log(item)
+                                  //  console.log(item)
                                     var isSystem = (item.system === true || item.isSystem === true)
                                         if (item.contentType === "text") {
                                             return (
@@ -390,7 +390,7 @@ const ContentCenter = ({
                                                             </Tooltip>
                                                         )}
                                                         <Tooltip  title={item.createdAt && convertToHCMTime(item.createdAt)}>
-                                                            <p style={{color: isSystem ? (item.content.includes("deleted") ?  "red" : hintColor) : textColor}}>{item.content}</p>
+                                                            <p style={{color: isSystem ? (item.content.includes("deleted") ?  "red" : hintColor) : "white"}}>{item.content}</p>
                                                         </Tooltip>
                                                     </div>
                                                 </div>
@@ -474,7 +474,7 @@ const ContentCenter = ({
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             style={{
-                                                                color: textColor,
+                                                                color: "white",
                                                                 textDecoration: "underline",
                                                                 wordBreak: "break-word",
                                                             }}

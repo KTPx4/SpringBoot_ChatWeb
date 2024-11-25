@@ -92,7 +92,7 @@ const LoginFragment = ({user, pass, openNotification, openForgot}) => {
                 <button onClick={openForgot} style={{
                     border: "none",
                     background: "transparent",
-                    color: "black",
+                    color: "#f9629f",
                     fontSize: 14,
                     marginTop: 15
                 }}>Forgot password

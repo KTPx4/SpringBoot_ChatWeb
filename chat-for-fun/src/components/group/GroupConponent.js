@@ -418,6 +418,7 @@ const GroupConponent = ({ socketHandler }) =>{
                         deputy: updateGr.deputy,
                         leaderId: updateGr.leaderId,
                         members: updateGr.members,
+                        membersV2: updateGr.membersV2
                     }
                     : group)
             setDataGroup(newDt)
