@@ -53,6 +53,7 @@
 
 
 }
+
 ::-webkit-scrollbar , .content::-webkit-scrollbar,  .ant-list::-webkit-scrollbar{
     background: transparent !important;
     width: 3px; /* Chiều rộng thanh cuộn */
