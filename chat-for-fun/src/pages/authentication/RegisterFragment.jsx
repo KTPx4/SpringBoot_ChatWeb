@@ -86,7 +86,7 @@ const RegisterFragment = ({afterRegister, openNotification, openForgot}) => {
                         :
                         <button style={{background: "#6CB4EE"}} type="submit" className="login-button">SEND</button>}
                 </form>
-                <button onClick={openForgot}  style={{border: "none", background: "transparent",color: "black", fontSize: 14, marginTop: 15}}>Forgot password</button>
+                <button onClick={openForgot}  style={{border: "none", background: "transparent", color: "#2f99f0", fontSize: 14, marginTop: 15}}>Forgot password</button>
             </div>
             {/* Container cho các lớp sóng */}
             <WaveFragment isLogin={false}/>

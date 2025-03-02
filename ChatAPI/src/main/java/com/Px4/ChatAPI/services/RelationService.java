@@ -1,6 +1,7 @@
 package com.Px4.ChatAPI.services;
 
 import com.Px4.ChatAPI.controllers.jwt.JwtRequestFilter;
+import com.Px4.ChatAPI.controllers.requestParams.account.AccountInfo;
 import com.Px4.ChatAPI.controllers.requestParams.relation.*;
 import com.Px4.ChatAPI.models.account.AccountModel;
 import com.Px4.ChatAPI.models.account.AccountRepository;
@@ -670,7 +671,12 @@ public class RelationService {
         GroupChatItem grI = new GroupChatItem(gr);
         grI.addMessage(messCreate);
         grI.setSettings(grSetting);
-
+        List<AccountInfo> accInfos= new ArrayList<>();
+        grI.getMembers().forEach(id->{
+            AccountModel acc = accountRepository.findById(id).get();
+            if(acc != null) accInfos.add(new AccountInfo(acc.getId(), acc.getName(), acc.getImage()));
+        });
+        grI.setMembersV2(accInfos);
         return grI;
     }
 }

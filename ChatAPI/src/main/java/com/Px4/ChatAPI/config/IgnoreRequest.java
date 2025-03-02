@@ -17,7 +17,7 @@ public class IgnoreRequest {
             "/api/v1/account/login",
             "/api/v1/account/register",
             "/api/v1/account/reset"
-
+//            "/", "/{x:[\\w\\-]+}", "/{x:^(?!api$).*$}/*/{y:[\\w\\-]+}","/error"
     );
 
     public static boolean isIgnore(String requestPath)

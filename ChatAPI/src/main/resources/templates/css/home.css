@@ -1,0 +1,63 @@
+
+.ant-layout-sider-dark {
+    background: linear-gradient(rgb(2, 18, 33), #4C516D) !important;
+    /*background: linear-gradient(rgb(2, 18, 33), rgb(60, 74, 88)) !important;*/
+}
+.ant-layout-sider-light {
+    background: linear-gradient( rgb(254, 238, 255), rgb(255, 255, 255)) !important;
+}
+
+
+/* Đảm bảo các thành phần bên trong có nền trong suốt để gradient áp dụng từ cha */
+.ant-layout-sider-dark .ant-layout-sider-children,
+.ant-layout-sider-dark .ant-layout-sider-trigger {
+    background: transparent !important;
+}
+
+/* Đặt nền menu trong suốt để hiển thị gradient từ cha */
+.ant-layout-sider-dark .ant-menu {
+    background: transparent !important;
+}
+.ant-layout-sider-dark .ant-list {
+    background: transparent !important;
+}
+.layout-main .main-sider {
+    border-radius: 25px !important;
+    margin: 2px 3px !important;
+
+}
+.main-sider.ant-layout-sider-light{
+        border: 1px solid rgb(227, 227, 227) !important;
+
+}
+.main-sider.ant-layout-sider-dark{
+        border: 1px solid #696f93 !important;
+}
+.modal-light .ant-modal-content {
+    background: #fbfbfb;
+    .ant-modal-header {
+
+        background: transparent !important;
+    }
+}
+.modal-dark .ant-modal-content {
+    background: #696f93;
+    .ant-modal-header{
+        background: transparent !important;
+    }
+}
+
+
+.ant-layout-sider-light .ant-layout-sider-children,
+.ant-layout-sider-light .ant-layout-sider-trigger {
+    background: transparent !important;
+}
+
+/* Đặt nền menu trong suốt để hiển thị gradient từ cha */
+.ant-layout-sider-light .ant-menu {
+    background: transparent !important;
+}
+.ant-layout-sider-light .ant-list {
+    background: transparent !important;
+}
+

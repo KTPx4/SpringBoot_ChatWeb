@@ -22,8 +22,7 @@
     background: #2f99f0;
     padding: 10px;
     border-radius: 15px;
-    color: white;
-
+    /*color: white !important;*/
 }
 .message-border {
     border-top: 1px solid #e8e8e8;
@@ -33,9 +32,11 @@
     width: fit-content !important;
 }
 
-.img span{
-    max-width: 300px;
+img{
+    max-width: 250px;
+    max-height: 300px;
 }
+
 .message.img.message-me {
     justify-content: end !important;
 }

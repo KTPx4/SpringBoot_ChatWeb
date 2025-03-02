@@ -218,12 +218,12 @@ const GroupConponent = ({ socketHandler }) =>{
                 message.success(`${info.file.name} file uploaded successfully.`);
                 const newLink = info.file.response + `?t=${Date.now()}`
                 var curr = {...currentSelected, avatar: newLink}
-                console.log(curr)
+
                 setCurrentSelected(curr);
                 var dt = dataGroup.map((gr)=> gr.id === curr.id ? curr : gr)
-                console.log(dt)
-                console.log(dataGroup)
+
                 setDataGroup(dt)
+                setIsModalUpload(false)
 
             } else if (status === 'error') {
                 message.error(`${info.file.name} file upload failed.`);
@@ -282,6 +282,8 @@ const GroupConponent = ({ socketHandler }) =>{
                 //     gr.id === curr.id ? curr : gr
                 // );
                 // setDataGroup(updatedDataGroup);
+                setIsModalFile(false)
+
             } else if (status === 'error') {
                 message.error(`${info.file.name} file upload failed.`);
             }
@@ -416,6 +418,7 @@ const GroupConponent = ({ socketHandler }) =>{
                         deputy: updateGr.deputy,
                         leaderId: updateGr.leaderId,
                         members: updateGr.members,
+                        membersV2: updateGr.membersV2
                     }
                     : group)
             setDataGroup(newDt)

@@ -76,19 +76,19 @@ public class SecurityConfig   {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtRequestFilter jwtRequestFilter) throws Exception {
         http
-
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(crs-> crs.configurationSource(corsConfigurationSource()))// Enable CORS with custom configuration
-                .authorizeHttpRequests(auth ->
-                    {
-                        try{
-                            IgnoreRequest.getIgnoreList().forEach(ignore -> auth.requestMatchers(ignore).permitAll());
-                            auth.anyRequest().authenticated();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                .cors(crs -> crs.configurationSource(corsConfigurationSource())) // Enable CORS with custom configuration
+                .authorizeHttpRequests(auth -> {
+                    try {
+                        IgnoreRequest.getIgnoreList().forEach(ignore -> auth.requestMatchers(ignore).permitAll());
+                        // Các route bắt đầu bằng `/api` yêu cầu xác thực
+//                        auth.requestMatchers("/api/**").authenticated();
+                        // Các request còn lại không yêu cầu xác thực
+                        auth.anyRequest().authenticated(); // Đây là rule cần thiết để không gây lỗi
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                )
+                })
                 .exceptionHandling(excH -> excH.accessDeniedHandler(customAccessDeniedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         // Thêm bộ lọc JWT trước UsernamePasswordAuthenticationFilter
@@ -96,6 +96,7 @@ public class SecurityConfig   {
 
         return http.build();
     }
+
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
